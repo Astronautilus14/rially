@@ -5,9 +5,8 @@ const prisma = new PrismaClient();
 export default prisma;
 
 export function sendError(res: Response, msg?: string, status?: number) {
-  res.status(status ?? 500).send(
-    JSON.stringify({
-      message: msg ?? "An error occured",
-    })
-  );
+  const data = JSON.stringify({
+    message: msg ?? "An error occured",
+  });
+  res.status(status ?? 500).send(data);
 }

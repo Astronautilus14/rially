@@ -10,21 +10,107 @@ const router = express.Router();
 // @ts-expect-error
 const secretKey: string = process.env.JWT_PRIVATE_KEY;
 
-router.post("/register", async (req, res) => {
-  const { username, password }: { username: string; password: string } =
-    req.body;
-  if (!username || !password)
-    return sendError(res, "Username and password are required", 400);
-  if (password.length < 6) return sendError(res, "Password too short", 400);
+// router.post("/register", async (req, res) => {
+//   const {
+//     username,
+//     password,
+//     discordId,
+//     name,
+//   }: { username: string; password?: string; discordId: string; name: string } =
+//     req.body;
+//   if (!username || !name)
+//     return sendError(res, "Username and name are required", 400);
+//   if (!discordId) return sendError(res, "Discord ID required", 400);
+//   const discordIdNumber = Number(discordId);
+//   if (Number.isNaN(discordIdNumber))
+//     return sendError(res, "Incorrect Discord ID", 400);
 
-  const salt = await bcrypt.genSalt(10);
-  const hash = await bcrypt.hash(password, salt);
+//   let hash: string | null = null;
+//   if (password) {
+//     if (password.length < 6) return sendError(res, "Password too short", 400);
+
+//     const salt = await bcrypt.genSalt(10);
+//     hash = await bcrypt.hash(password, salt);
+//   }
+
+//   prisma.user
+//     .create({
+//       data: {
+//         username: username.toLowerCase(),
+//         password: hash,
+//         name,
+//         discordId: discordIdNumber,
+//       },
+//     })
+//     .then((data) => {
+//       const token = jwt.sign(
+//         {
+//           uid: data.id,
+//         },
+//         secretKey
+//       );
+//       return res.send(
+//         JSON.stringify({
+//           token,
+//         })
+//       );
+//     })
+//     .catch((error) => {
+//       if (error.code === "P2002" && error.meta?.target === "user_username_key")
+//         return sendError(res, "Username already exists", 400);
+//       if (error.code === "P2002" && error.meta?.target === "user_discordId_key")
+//         return sendError(res, "Discord is already connected", 400);
+//       console.error(error);
+//       return sendError(res);
+//     });
+// });
+
+router.post("/register", async (req, res) => {
+  const {
+    token,
+    username,
+    name,
+  }: { token: string; username: string; name: string } = req.body;
+  // @ts-expect-error
+  const secret: string = process.env.LINK_DISCORD_SECRET;
+
+  let discordId: string;
+  let sentResponse = false;
+  jwt.verify(token, secret, (err, payload) => {
+    if (err) {
+      if (err.name === "TokenExpiredError") {
+        sentResponse = true;
+        return sendError(
+          res,
+          "Token expired, request a new one by using the -register command on discord.",
+          401
+        );
+      }
+      console.log(err);
+      sentResponse = true;
+      return sendError(res, "Token not valid", 401);
+    }
+    // @ts-expect-error
+    discordId = payload?.discordId;
+    if (!discordId) {
+      sentResponse = true;
+      return sendError(res, "Discord ID required", 400);
+    }
+  });
+
+  if (sentResponse) return;
+
+  if (!username) return sendError(res, "Username required", 400);
+  if (!name) return sendError(res, "Name required", 400);
 
   prisma.user
     .create({
       data: {
         username: username.toLowerCase(),
-        password: hash,
+        password: null,
+        name,
+        // @ts-expect-error
+        discordId,
       },
     })
     .then((data) => {
@@ -43,6 +129,8 @@ router.post("/register", async (req, res) => {
     .catch((error) => {
       if (error.code === "P2002" && error.meta?.target === "user_username_key")
         return sendError(res, "Username already exists", 400);
+      if (error.code === "P2002" && error.meta?.target === "user_discordId_key")
+        return sendError(res, "Discord is already connected", 400);
       console.error(error);
       return sendError(res);
     });
@@ -57,6 +145,8 @@ router.post("/login", async (req, res) => {
     },
   });
   if (!user) return sendError(res, `Username ${username} not found`, 400);
+
+  if (!user.password) return sendError(res, "No password set", 400);
   if (await bcrypt.compare(password, user.password)) {
     const token = jwt.sign({ uid: user.id }, secretKey);
     res.send(

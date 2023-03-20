@@ -15,7 +15,6 @@ router.post("/", tokenCheck, teamCheck, isCommittee, (req, res) => {
         name: teamName,
       },
     })
-    .then(() => res.sendStatus(200))
     .catch((error) => {
       if (error.code === "P2002" && error.meta?.target === "team_name_key")
         return sendError(res, "Team name already exists", 400);

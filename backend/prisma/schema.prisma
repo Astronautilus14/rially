@@ -11,11 +11,13 @@ datasource db {
 }
 
 model user {
-  id       Int    @id @default(autoincrement())
-  username String @unique
-  password String
-  team     team?  @relation(fields: [teamId], references: [id])
-  teamId   Int?
+  id        Int     @id @default(autoincrement())
+  username  String  @unique
+  discordId String? @unique
+  name      String  @default("Unknwown")
+  password  String?
+  team      team?   @relation(fields: [teamId], references: [id])
+  teamId    Int?
 }
 
 model team {
