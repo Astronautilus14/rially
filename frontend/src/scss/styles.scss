@@ -1,0 +1,39 @@
+@import "~bootstrap/scss/bootstrap";
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  color: white;
+
+  background: rgb(115, 10, 205);
+  background: radial-gradient(
+    circle,
+    rgba(115, 10, 205, 1) 0%,
+    rgba(28, 5, 61, 1) 100%
+  );
+
+  margin: 0;
+}
+
+/* Fix body not aligning on top: */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+#app {
+  z-index: 1;
+}
+
+#particles-js {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+
+  top: 0px;
+  left: 0px;
+  z-index: 0;
+}

@@ -1,1 +1,1 @@
-<h1>Rially</h1>
+<h1>Rially huts!</h1>
