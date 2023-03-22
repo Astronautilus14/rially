@@ -14,7 +14,7 @@ model user {
   id        Int     @id @default(autoincrement())
   username  String  @unique
   discordId String? @unique
-  name      String  @default("Unknwown")
+  name      String  @default("Miel Monteur")
   password  String?
   team      team?   @relation(fields: [teamId], references: [id])
   teamId    Int?
@@ -27,35 +27,41 @@ model team {
   isCommitte          Boolean               @default(false)
   channelId           Int?
   roleId              Int?
+  submission          submission[]
+}
+
+model submission {
+  id                  Int                   @id @default(autoincrement())
+  team                team                  @relation(fields: [teamId], references: [id])
+  teamId              Int
+  fileLink            String                @unique
+  grading             Int?
   puzzlesubmission    puzzlesubmission[]
   challangesubmission challangesubmission[]
   crazy88submission   crazy88submission[]
 }
 
 model puzzlesubmission {
-  id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
-  teamId   Int
-  fileLink String @unique
-  grading  Int?
+  submission   submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId Int        @id
+
+  //   Custom fields
   location Int
 }
 
 model challangesubmission {
-  id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
-  teamId   Int
-  fileLink String @unique
-  grading  Int?
+  submission   submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId Int        @id
+
+  //   Custom fields
   location Int
   number   Int
 }
 
 model crazy88submission {
-  id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
-  teamId   Int
-  fileLink String @unique
-  grading  Int?
-  number   Int
+  submission   submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId Int        @id
+
+  //   Custom fields
+  number Int
 }

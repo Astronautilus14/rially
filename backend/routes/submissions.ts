@@ -11,6 +11,11 @@ import {
 } from "./auth";
 import io from "../socket";
 import axios from "axios";
+import {
+  challangesubmission,
+  puzzlesubmission,
+  submission,
+} from "@prisma/client";
 
 const router = express.Router();
 
@@ -26,13 +31,18 @@ router.post(
     // Figure out where they are now
     const puzzleSubmissions = await prisma.puzzlesubmission.findMany({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
+        submission: {
+          // @ts-expect-error
+          teamId: req.data.team.id,
+        },
+      },
+      include: {
+        submission: true,
       },
     });
     const location = puzzleSubmissions.length + 1;
     for (const submission of puzzleSubmissions) {
-      if (submission.grading === null)
+      if (submission.submission.grading === null)
         return sendError(
           res,
           `Your team already submitted a puzzle for location ${
@@ -46,10 +56,12 @@ router.post(
     try {
       submission = await prisma.puzzlesubmission.create({
         data: {
-          // @ts-expect-error
-          teamId: req.data.team.id,
           location,
-          fileLink,
+          submission: {
+            // @ts-expect-error
+            teamId: req.data.team.id,
+            fileLink: fileLink,
+          },
         },
       });
     } catch (error) {
@@ -60,7 +72,7 @@ router.post(
     res.json({
       message: `Your submission for puzzle location ${location} has been received. It will be graded soon.`,
     });
-    io.emit("submission", submission.id, "puzzle");
+    io.emit("submission", submission.submissionId, "puzzle");
   }
 );
 
@@ -77,29 +89,37 @@ router.post(
     // Figure out where they are now
     const gradedSubmissions = await prisma.puzzlesubmission.findMany({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
-        NOT: {
-          grading: null,
+        submission: {
+          // @ts-expect-error
+          teamId: req.data.team.id,
+          NOT: {
+            grading: null,
+          },
         },
       },
+      include: { submission: true },
     });
     const location = gradedSubmissions.length;
 
     // Figure out if they already submitted
     const challangeSubmissions = await prisma.challangesubmission.findMany({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
+        submission: {
+          // @ts-expect-error
+          teamId: req.data.team.id,
+        },
+      },
+      include: {
+        submission: true,
       },
     });
-    for (const submission of challangeSubmissions) {
+    for (let submission of challangeSubmissions) {
       if (submission.location === location && submission.number === number)
         return sendError(
           res,
           `Your team already submitted location challange ${number} for location ${location}. ${
             "Your submission will be graded as soon as possible"
-              ? submission.grading === null
+              ? submission.submission.grading === null
               : ""
           }`,
           400
@@ -110,10 +130,12 @@ router.post(
     try {
       submission = await prisma.challangesubmission.create({
         data: {
-          // @ts-expect-error
-          teamId: req.data.team.id,
+          submission: {
+            // @ts-expect-error
+            teamId: req.data.team.id,
+            fileLink,
+          },
           location,
-          fileLink,
           number,
         },
       });
@@ -125,7 +147,7 @@ router.post(
     res.json({
       message: `Your submission for location challange ${number} at location ${location} has been received. It will be graded soon.`,
     });
-    io.emit("submission", submission.id, "challange");
+    io.emit("submission", submission.submissionId, "challange");
   }
 );
 
@@ -142,16 +164,19 @@ router.post(
     // Figure out weather they already submitted
     const crazy88submissions = await prisma.crazy88submission.findMany({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
+        submission: {
+          // @ts-expect-error
+          teamId: req.data.team.id,
+        },
       },
+      include: { submission: true },
     });
     for (const submission of crazy88submissions) {
       if (submission.number === number)
         return sendError(
           res,
           `Your team already submitted a photo or video for crazy 88 task ${number}. ${
-            submission.grading === null
+            submission.submission.grading === null
               ? "Your submission will be graded as soon as possible"
               : ""
           }`,
@@ -163,9 +188,11 @@ router.post(
     try {
       submission = await prisma.crazy88submission.create({
         data: {
-          // @ts-expect-error
-          teamId: req.data.team.id,
-          fileLink,
+          submission: {
+            // @ts-expect-error
+            teamId: req.data.team.id,
+            fileLink,
+          },
           number,
         },
       });
@@ -177,7 +204,7 @@ router.post(
     res.json({
       message: `Your submission for crazy 88 task ${number} has been received. It will be graded soon.`,
     });
-    io.emit("submission", submission.id, "crazy88");
+    io.emit("submission", submission.submissionId, "crazy88");
   }
 );
 
@@ -190,18 +217,27 @@ function checkTeam(req: Request, res: Response, next: NextFunction) {
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const puzzles = prisma.puzzlesubmission.findMany({
     where: {
-      grading: null,
+      submission: {
+        grading: null,
+      },
     },
+    include: { submission: true },
   });
   const challanges = prisma.challangesubmission.findMany({
     where: {
-      grading: null,
+      submission: {
+        grading: null,
+      },
     },
+    include: { submission: true },
   });
   const crazy88 = prisma.crazy88submission.findMany({
     where: {
-      grading: null,
+      submission: {
+        grading: null,
+      },
     },
+    include: { submission: true },
   });
   Promise.all([puzzles, challanges, crazy88]).then(
     ([puzzles, challanges, crazy88]) => {
@@ -245,7 +281,12 @@ router.get(
 
     // @ts-expect-error
     const submission = await table.findUnique({
-      where: { id },
+      where: {
+        submission: {
+          id,
+        },
+      },
+      include: { submission: true },
     });
     if (!submission)
       return sendError(res, "Combination type, id is unkown", 400);
@@ -281,8 +322,17 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
 
   // @ts-expect-error
   await table.update({
-    where: { id },
-    data: { grading },
+    where: {
+      submission: {
+        id,
+      },
+    },
+    data: {
+      submission: {
+        grading,
+      },
+    },
+    include: { submission: true },
   });
 
   // await axios.post(`${process.env.BOT_API_URL}/grade`, {
