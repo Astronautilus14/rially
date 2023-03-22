@@ -25,8 +25,8 @@ model team {
   name                String                @unique
   members             user[]
   isCommitte          Boolean               @default(false)
-  channelId           Int?
-  roleId              Int?
+  channelId           String?
+  roleId              String?
   puzzlesubmission    puzzlesubmission[]
   challangesubmission challangesubmission[]
   crazy88submission   crazy88submission[]

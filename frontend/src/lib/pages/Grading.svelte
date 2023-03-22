@@ -1,45 +1,56 @@
 <script lang="ts">
   import settings from "../settings.json"
-  import { io } from "socket.io-client"
   import { onMount } from "svelte";
   import { navigate } from "svelte-routing";
+  import socket from "../socket";
 
-  const socket = io(settings.socketServerUrl)
+  let mounted = false;
 
   let pending: {id: number, active: boolean, type: string}[] = []
   socket.on("submission", (id: number, type: string) => {
     pending = [...pending, {id, active: false, type }]
   })
 
-  socket.on("grading-started", (id) => {
-    pending = pending.map(submission => {
-      if (submission.id === id) submission.active = true
-      return submission
-    })
+  let toSetActive: {id: number, type: string}[] = []
+  socket.on("grading-started", (id: number, type: string) => {
+    if (mounted) return setActive(id, type);
+    toSetActive.push({id, type})
+    console.log(toSetActive)
   })
 
-  socket.on("grading-finished", (id) => {
-    pending = pending.filter(submission => submission.id !== id)
+  socket.on("grading-finished", (id, type) => {
+    pending = pending.filter(submission => submission.id !== id && submission.type !== type)
   })
+
+  function setActive(id, type) {
+    pending = pending.map(submission => {
+      if (submission.id === id && submission.type === type) submission.active = true
+      return submission
+    })
+  }
 
   function grade(submission: any) {
     if (submission.active) return;
     socket.emit("grading-started", submission.id, submission.type);
-    navigate(`/submission/${submission.type}/${submission.id}`)
+    navigate(`/submission/${submission.type}/${submission.id}`);
   }
 
   onMount(async () => {
-  fetch(`${settings.api_url}/submissions`, {
-    headers: {
-      Authorization: localStorage.getItem("rially::token")
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-		pending = [...pending, ...data.pending]
-  }).catch(error => {
-    console.error(error);
-  });
+    fetch(`${settings.api_url}/submissions`, {
+      headers: {
+        Authorization: localStorage.getItem("rially::token"),
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      pending = [...pending, ...data.pending].reverse()
+      mounted = true;
+      for (const submission of toSetActive) {
+        setActive(submission.id, submission.type)
+      }
+    }).catch(error => {
+      console.error(error);
+    });
 });
 </script>
 

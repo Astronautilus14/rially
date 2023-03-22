@@ -9,11 +9,25 @@ const io = new SocketServer(server, {
   },
 });
 
+let areGrading: { id: number; type: string }[] = [];
+
 io.on("connection", (socket) => {
   console.log(`Client ${socket.id} connected to the socket server`);
 
-  socket.on("grading-started", (id, type) => {
+  for (const submission of areGrading) {
+    socket.emit("grading-started", submission.id, submission.type);
+  }
+
+  socket.on("grading-started", (id: number, type: string) => {
+    areGrading.push({ id, type });
     io.emit("grading-started", id, type);
+  });
+
+  socket.on("grading-finished", (id: number, type: string) => {
+    areGrading = areGrading.filter(
+      (submission) => submission.type !== type && submission.id !== id
+    );
+    io.emit("grading-finished", id, type);
   });
 });
 

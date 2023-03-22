@@ -208,7 +208,7 @@ router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       // @ts-expect-error
       puzzles.map((submission) => (submission.type = "puzzle"));
       // @ts-expect-error
-      challanges.map((submission) => (submission.type = "challanges"));
+      challanges.map((submission) => (submission.type = "challange"));
       // @ts-expect-error
       crazy88.map((submission) => (submission.type = "crazy88"));
       return res.json({
@@ -256,14 +256,10 @@ router.get(
 );
 
 router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  const {
-    type,
-    id,
-    grade: grading,
-  }: { type: string; id: number; grade: number } = req.body;
+  const { type, id, grading }: { type: string; id: number; grading: number } =
+    req.body;
   if (!type || !id || !grading)
-    return sendError(res, "Type, ID and Grade required", 400);
-
+    return sendError(res, "Type, ID and Grading required", 400);
   let table;
   switch (type) {
     case "crazy88":
@@ -280,21 +276,36 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
 
   // @ts-expect-error
-  await table.update({
+  const submission = await table.update({
     where: { id },
     data: { grading },
+    include: { team: true },
   });
+  console.log(submission);
 
-  // await axios.post(`${process.env.BOT_API_URL}/grade`, {
-  //   roleId: ,
-  //   channelId: ,
-  //   type: ,
-  //   number: ,
-  //   location: ,
-  //   grading: grading,
-  // })
+  try {
+    await axios.post(
+      `${process.env.BOT_API_URL}/grade`,
+      {
+        roleId: submission.team.roleId,
+        channelId: submission.team.channelId,
+        type,
+        number: submission.number ?? null,
+        location: submission.location ?? null,
+        grading: grading,
+      },
+      {
+        headers: {
+          Authorization: process.env.BOT_API_KEY!,
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    return sendError(res);
+  }
 
-  res.sendStatus(200);
+  return res.sendStatus(200);
 });
 
 export default router;
