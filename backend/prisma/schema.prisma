@@ -21,8 +21,41 @@ model user {
 }
 
 model team {
-  id         Int     @id @default(autoincrement())
-  name       String  @unique
-  members    user[]
-  isCommitte Boolean @default(false)
+  id                  Int                   @id @default(autoincrement())
+  name                String                @unique
+  members             user[]
+  isCommitte          Boolean               @default(false)
+  channelId           Int?
+  roleId              Int?
+  puzzlesubmission    puzzlesubmission[]
+  challangesubmission challangesubmission[]
+  crazy88submission   crazy88submission[]
+}
+
+model puzzlesubmission {
+  id       Int    @id @default(autoincrement())
+  team     team   @relation(fields: [teamId], references: [id])
+  teamId   Int
+  fileLink String @unique
+  grading  Int?
+  location Int
+}
+
+model challangesubmission {
+  id       Int    @id @default(autoincrement())
+  team     team   @relation(fields: [teamId], references: [id])
+  teamId   Int
+  fileLink String @unique
+  grading  Int?
+  location Int
+  number   Int
+}
+
+model crazy88submission {
+  id       Int    @id @default(autoincrement())
+  team     team   @relation(fields: [teamId], references: [id])
+  teamId   Int
+  fileLink String @unique
+  grading  Int?
+  number   Int
 }

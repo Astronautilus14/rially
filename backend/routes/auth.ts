@@ -10,60 +10,54 @@ const router = express.Router();
 // @ts-expect-error
 const secretKey: string = process.env.JWT_PRIVATE_KEY;
 
-// router.post("/register", async (req, res) => {
-//   const {
-//     username,
-//     password,
-//     discordId,
-//     name,
-//   }: { username: string; password?: string; discordId: string; name: string } =
-//     req.body;
-//   if (!username || !name)
-//     return sendError(res, "Username and name are required", 400);
-//   if (!discordId) return sendError(res, "Discord ID required", 400);
-//   const discordIdNumber = Number(discordId);
-//   if (Number.isNaN(discordIdNumber))
-//     return sendError(res, "Incorrect Discord ID", 400);
+router.post("/registerCommittee", async (req, res) => {
+  const {
+    username,
+    password,
+    name,
+  }: { username: string; password?: string; discordId: string; name: string } =
+    req.body;
+  if (!username || !name)
+    return sendError(res, "Username and name are required", 400);
 
-//   let hash: string | null = null;
-//   if (password) {
-//     if (password.length < 6) return sendError(res, "Password too short", 400);
+  let hash: string | null = null;
+  if (password) {
+    if (password.length < 6) return sendError(res, "Password too short", 400);
 
-//     const salt = await bcrypt.genSalt(10);
-//     hash = await bcrypt.hash(password, salt);
-//   }
+    const salt = await bcrypt.genSalt(10);
+    hash = await bcrypt.hash(password, salt);
+  }
 
-//   prisma.user
-//     .create({
-//       data: {
-//         username: username.toLowerCase(),
-//         password: hash,
-//         name,
-//         discordId: discordIdNumber,
-//       },
-//     })
-//     .then((data) => {
-//       const token = jwt.sign(
-//         {
-//           uid: data.id,
-//         },
-//         secretKey
-//       );
-//       return res.send(
-//         JSON.stringify({
-//           token,
-//         })
-//       );
-//     })
-//     .catch((error) => {
-//       if (error.code === "P2002" && error.meta?.target === "user_username_key")
-//         return sendError(res, "Username already exists", 400);
-//       if (error.code === "P2002" && error.meta?.target === "user_discordId_key")
-//         return sendError(res, "Discord is already connected", 400);
-//       console.error(error);
-//       return sendError(res);
-//     });
-// });
+  prisma.user
+    .create({
+      data: {
+        username: username.toLowerCase(),
+        password: hash,
+        name,
+      },
+    })
+    .then((data) => {
+      const token = jwt.sign(
+        {
+          uid: data.id,
+        },
+        secretKey
+      );
+      return res.send(
+        JSON.stringify({
+          token,
+        })
+      );
+    })
+    .catch((error) => {
+      if (error.code === "P2002" && error.meta?.target === "user_username_key")
+        return sendError(res, "Username already exists", 400);
+      if (error.code === "P2002" && error.meta?.target === "user_discordId_key")
+        return sendError(res, "Discord is already connected", 400);
+      console.error(error);
+      return sendError(res);
+    });
+});
 
 router.post("/register", async (req, res) => {
   const {
@@ -71,6 +65,8 @@ router.post("/register", async (req, res) => {
     username,
     name,
   }: { token: string; username: string; name: string } = req.body;
+  if (!token || !username || !name)
+    return sendError(res, "Token, Username and Name are required");
   // @ts-expect-error
   const secret: string = process.env.LINK_DISCORD_SECRET;
 
@@ -139,6 +135,8 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { username, password }: { username: string; password: string } =
     req.body;
+  if (!username || !password)
+    return sendError(res, "Username and Password are required", 400);
   const user = await prisma.user.findUnique({
     where: {
       username: username.toLowerCase(),
@@ -199,6 +197,42 @@ export async function teamCheck(
 export function isCommittee(req: Request, res: Response, next: NextFunction) {
   if (!req.data?.team?.isCommitte)
     sendError(res, "You are not allowed to do this", 403);
+  next();
+}
+
+export function checkBotApiKey(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const key = req.headers.authorization;
+  if (!key) return sendError(res, "No auth key found", 401);
+  if (key === process.env.BOT_API_KEY!) return next();
+  return sendError(res, "Invalid key", 401);
+}
+
+export async function checkDiscordId(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { discordId } = req.body;
+  if (!discordId) return sendError(res, "Discord ID is required", 400);
+
+  const user = await prisma.user.findUnique({
+    where: {
+      discordId,
+    },
+    include: {
+      team: true,
+    },
+  });
+  if (!user) return sendError(res, "Discord ID is unkown", 401);
+  req.data = {
+    uid: user.id,
+    username: user.username,
+    team: user.team ?? undefined,
+  };
   next();
 }
 

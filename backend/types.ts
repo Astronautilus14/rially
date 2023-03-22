@@ -5,5 +5,6 @@ export interface Request extends ExpressRequest {
   data?: {
     uid?: number;
     team?: team;
+    username?: string;
   };
 }

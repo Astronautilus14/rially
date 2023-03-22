@@ -2,14 +2,15 @@ import express from "express";
 import prisma, { sendError } from "../database";
 import { isCommittee, teamCheck, tokenCheck } from "./auth";
 import type { Request } from "../types";
+import axios from "axios";
 
 const router = express.Router();
 
-router.post("/", tokenCheck, teamCheck, isCommittee, (req, res) => {
+router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { teamName } = req.body;
   if (!teamName) return sendError(res, "Team name is required", 400);
 
-  prisma.team
+  const team = await prisma.team
     .create({
       data: {
         name: teamName,
@@ -19,6 +20,23 @@ router.post("/", tokenCheck, teamCheck, isCommittee, (req, res) => {
       if (error.code === "P2002" && error.meta?.target === "team_name_key")
         return sendError(res, "Team name already exists", 400);
     });
+
+  if (!team) return sendError(res);
+
+  const discordRes = await axios.post(`${process.env.BOT_API_URL}`, {
+    name: teamName,
+  });
+
+  await prisma.team.update({
+    where: {
+      id: team.id,
+    },
+    data: {
+      channelId: discordRes.data.channelId,
+      roleId: discordRes.data.roleId,
+    },
+  });
+  res.sendStatus(200);
 });
 
 router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
