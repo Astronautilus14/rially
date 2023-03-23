@@ -12,6 +12,9 @@
 </script>
 
 <Router>
+  <Link to="/teams">Teams</Link>
+  <Link to="/people">Lonely people</Link>
+  <Link to="/grading">Grading</Link>
   <div>
     <Route path="register" component="{Register}" />
     <Route path="grading" component="{Grading}" />

@@ -76,4 +76,8 @@
     display: flex;
     flex-direction: column;
   }
+
+  .error {
+    color: red
+  }
 </style>
