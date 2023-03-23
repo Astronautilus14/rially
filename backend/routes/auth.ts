@@ -195,7 +195,7 @@ export async function teamCheck(
 }
 
 export function isCommittee(req: Request, res: Response, next: NextFunction) {
-  if (!req.data?.team?.isCommitte)
+  if (!req.data?.team?.isCommittee)
     return sendError(res, "You are not allowed to do this", 403);
   next();
 }

@@ -55,11 +55,12 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
 });
 
 router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  const { teamId } = req.body;
-  if (!teamId) return sendError(res, "No team id", 400);
+  const { teamId }: { teamId: number } = req.body;
+  if (!teamId) return sendError(res, "Team ID required", 400);
 
+  let team;
   try {
-    await prisma.team.delete({
+    team = await prisma.team.delete({
       where: {
         id: teamId,
       },
@@ -68,6 +69,25 @@ router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     console.error(error);
     return sendError(res);
   }
+
+  if (!team) return sendError(res, "Team ID not found", 400);
+  if (!team.channelId || !team.roleId) return res.sendStatus(200);
+
+  try {
+    await axios.delete(`${process.env.BOT_API_URL}/teams`, {
+      data: {
+        channelId: team.channelId,
+        roleId: team.roleId,
+      },
+      headers: {
+        Authorization: process.env.BOT_API_KEY,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return sendError(res);
+  }
+  return res.sendStatus(200);
 });
 
 router.patch(
@@ -120,7 +140,6 @@ router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
   if (!user) return sendError(res, "User ID is now known", 400);
 
-  console.log(user);
   try {
     await axios.post(
       `${process.env.BOT_API_URL}/teams/member`,
@@ -142,24 +161,47 @@ router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   return res.sendStatus(200);
 });
 
-router.delete("/member", tokenCheck, teamCheck, isCommittee, (req, res) => {
-  const { userId, newTeamId } = req.body;
-  if (!userId) return sendError(res, "User id is required", 400);
-  prisma.user
-    .update({
-      where: {
-        id: userId,
-      },
-      data: {
-        teamId: newTeamId ?? null,
-      },
-    })
-    .then(() => res.sendStatus(200))
-    .catch((error) => {
+router.delete(
+  "/member",
+  tokenCheck,
+  teamCheck,
+  isCommittee,
+  async (req, res) => {
+    const { userId, newTeamId } = req.body;
+    if (!userId) return sendError(res, "User id is required", 400);
+
+    let user;
+    try {
+      user = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          teamId: newTeamId ?? null,
+        },
+      });
+    } catch (error) {
       console.error(error);
       return sendError(res);
-    });
-});
+    }
+    if (!user) return sendError(res, "User not found", 400);
+    if (!user.discordId) return res.sendStatus(200);
+
+    try {
+      await axios.delete(`${process.env.BOT_API_URL}/teams/member`, {
+        data: {
+          discordId: user.discordId,
+        },
+        headers: {
+          Authorization: process.env.BOT_API_KEY,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      return sendError(res);
+    }
+  }
+);
 
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) =>
   res.json(await prisma.team.findMany())
@@ -170,7 +212,11 @@ router.get("/:id", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   if (Number.isNaN(id)) return sendError(res);
   const data = await prisma.team.findUnique({
     where: { id },
-    include: { members: { select: { username: true, name: true, id: true } } },
+    include: {
+      members: {
+        select: { username: true, name: true, id: true, discordId: true },
+      },
+    },
   });
   return res.json(data);
 });
@@ -190,7 +236,7 @@ router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
 
     const teams = prisma.team.findMany({
       where: {
-        isCommitte: false,
+        isCommittee: false,
       },
     });
 

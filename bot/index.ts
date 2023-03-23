@@ -228,6 +228,71 @@ app.post("/grade", verifyToken, async (req, res) => {
   return res.sendStatus(200);
 });
 
+app.delete("/teams", verifyToken, async (req, res) => {
+  const { channelId, roleId } = req.body;
+  if (!channelId || !roleId)
+    return res.status(400).json({ message: "Channel ID and Role ID required" });
+
+  const guild = client.guilds.cache.find(
+    (guild) => guild.id === process.env.DISCORD_SERVER_ID
+  );
+  if (!guild)
+    return res.status(500).json({
+      message: "Discord bot broke",
+    });
+
+  let role = guild.roles.cache.find((role) => role.id == roleId);
+  if (!role) role = (await guild.roles.fetch(roleId)) ?? undefined;
+  if (!role)
+    return res.status(400).json({
+      message: "Role not found",
+    });
+
+  let channel = guild.channels.cache.find((c) => c.id == channelId);
+  if (!channel) channel = (await guild.channels.fetch(channelId)) ?? undefined;
+  if (!channel?.isTextBased()) return res.sendStatus(500);
+  channel = channel as discordjs.TextChannel;
+
+  const roleDelete = role.delete();
+  const channelDelete = channel.delete();
+
+  Promise.all([roleDelete, channelDelete])
+    .then(() => res.sendStatus(200))
+    .catch((error) => {
+      console.error(error);
+      return res.sendStatus(500);
+    });
+});
+
+app.delete("/teams/member", verifyToken, async (req, res) => {
+  const { discordId } = req.body;
+  if (!discordId)
+    return res.status(400).json({ message: "Discord ID required" });
+
+  const guild = client.guilds.cache.find(
+    (guild) => guild.id === process.env.DISCORD_SERVER_ID
+  );
+  if (!guild)
+    return res.status(500).json({
+      message: "Discord bot broke",
+    });
+
+  let user = guild.members.cache.find((m) => m.id == discordId);
+  if (!user) user = (await guild.members.fetch(discordId)) ?? undefined;
+  if (!user)
+    return res.status(400).json({
+      message: "User not found",
+    });
+
+  user.roles
+    .remove(user.roles.cache)
+    .then(() => res.sendStatus(200))
+    .catch((error) => {
+      console.error(error);
+      return res.sendStatus(500);
+    });
+});
+
 async function run() {
   await client.login(process.env.DISCORD_TOKEN);
   const port = process.env.PORT ?? 8081;

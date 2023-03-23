@@ -24,7 +24,7 @@ model team {
   id                  Int                   @id @default(autoincrement())
   name                String                @unique
   members             user[]
-  isCommitte          Boolean               @default(false)
+  isCommittee         Boolean               @default(false)
   channelId           String?
   roleId              String?
   puzzlesubmission    puzzlesubmission[]
@@ -34,7 +34,7 @@ model team {
 
 model puzzlesubmission {
   id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
+  team     team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId   Int
   fileLink String @unique
   grading  Int?
@@ -43,7 +43,7 @@ model puzzlesubmission {
 
 model challangesubmission {
   id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
+  team     team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId   Int
   fileLink String @unique
   grading  Int?
@@ -53,7 +53,7 @@ model challangesubmission {
 
 model crazy88submission {
   id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
+  team     team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId   Int
   fileLink String @unique
   grading  Int?
