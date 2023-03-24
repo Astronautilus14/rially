@@ -38,10 +38,10 @@
   };
 </script>
 
-<main class="centered">
-  <div class="card" style="width: 18rem;">
+<main data-bs-theme="dark">
+  <div class="card">
     <div class="card-body">
-      <h1 class="card-title">RIAlly</h1>
+      <h1 class="card-title">Register now!</h1>
       <hr />
       {#if succes}
         <h2>
@@ -50,21 +50,28 @@
         </h2>
       {:else}
         <form on:submit|preventDefault={registerSubmit}>
-          <span>
-            <label for="username">Username</label>
-            <label class="sub-label" for="username"
-              >This will be visible to everyone</label
-            >
-            <input type="text" name="username" />
-          </span>
+          <div class="section">
+            <label class="form-label" for="username">Username</label>
+            <input
+              class="form-control form-control-lg"
+              type="text"
+              name="username"
+              placeholder="Miel Monteur"
+            />
+            <div class="form-text">Your username is visible to everyone</div>
+          </div>
 
-          <span>
-            <label for="name">Name</label>
-            <label class="sub-label" for="name"
-              >So the committee knows your not a goblin!</label
-            >
-            <input type="text" name="name" />
-          </span>
+          <div>
+            <label class="form-label" for="name">Name</label>
+            <input
+              class="form-control form-control-lg"
+              type="text"
+              name="name"
+            />
+            <div class="form-text">
+              So the committee knows your not a goblin!
+            </div>
+          </div>
 
           <input
             type="submit"
@@ -81,30 +88,30 @@
 </main>
 
 <style lang="scss">
-  main {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
+  //   main {
+  //     display: flex;
+  //     align-items: center;
+  //     flex-direction: column;
 
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+  //     form {
+  //       display: flex;
+  //       flex-direction: column;
+  //       gap: 3em;
 
-      span {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
+  //       span {
+  //         display: flex;
+  //         flex-direction: column;
+  //         gap: 1em;
 
-        .sub-label {
-          font-size: 0.8rem;
-        }
-      }
-    }
+  //         .sub-label {
+  //           font-size: 0.8rem;
+  //         }
+  //       }
+  //     }
 
-    .error {
-      color: red;
-      text-align: center;
-    }
-  }
+  //     .error {
+  //       color: red;
+  //       text-align: center;
+  //     }
+  //   }
 </style>

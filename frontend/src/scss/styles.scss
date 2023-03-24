@@ -11,7 +11,7 @@ body {
   background: #720acc;
   background: radial-gradient(circle, #730acd 0%, rgba(28, 5, 61, 1) 100%);
 
-  margin: 0;
+  //   margin: 0;
 }
 
 /* Fix body not aligning on top: */
@@ -27,7 +27,7 @@ body {
 #particles-js {
   position: absolute;
   width: 100%;
-  height: 100%;
+  height: 95vh; // Bug in particles.js, it fills the screen too much
 
   top: 0px;
   left: 0px;
@@ -116,15 +116,15 @@ body {
   }
 }
 
-.card {
-  /* From https://css.glass */
-  //   background: rgba(248, 42, 255, 0.34);
-  background: #8849e674;
-  border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(6.7px);
-  -webkit-backdrop-filter: blur(6.7px);
-  border: 1px solid #fff;
+// .card {
+//   /* From https://css.glass */
+//   //   background: rgba(248, 42, 255, 0.34);
+//   background: #9857fa74;
+//   border-radius: 16px;
+//   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+//   backdrop-filter: blur(6.7px);
+//   -webkit-backdrop-filter: blur(6.7px);
+//   border: 1px solid #fff;
 
-  color: #fff;
-}
+//   color: #fff;
+// }

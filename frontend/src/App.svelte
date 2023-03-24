@@ -6,16 +6,20 @@
   import Grading from "./lib/pages/Grading.svelte";
   import Login from "./lib/pages/Login.svelte";
   import Submission from "./lib/pages/Submission.svelte";
+
+  // Import our custom CSS
+  import "./scss/styles.scss";
+  import * as bootstrap from "bootstrap";
 </script>
 
 <Router>
-  <div>
-    <Route path="register" component="{Register}" />
-    <Route path="grading" component="{Grading}" />
-    <Route path="login" component="{Login}" />
+  <div data-bs-theme="dark">
+    <Route path="register" component={Register} />
+    <Route path="grading" component={Grading} />
+    <Route path="login" component={Login} />
     <Route path="submission/:type/:id" let:params>
-      <Submission id="{params.id}" type="{params.type}" />
+      <Submission id={params.id} type={params.type} />
     </Route>
-    <Route path="/" component="{Home}" />
+    <Route path="/" component={Home} />
   </div>
 </Router>
