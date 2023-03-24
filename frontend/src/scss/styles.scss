@@ -6,14 +6,10 @@ body {
   width: 100%;
   font-family: "Roboto", sans-serif;
   font-size: 14px;
-  color: white;
+  //   color: white;
 
-  background: rgb(115, 10, 205);
-  background: radial-gradient(
-    circle,
-    rgba(115, 10, 205, 1) 0%,
-    rgba(28, 5, 61, 1) 100%
-  );
+  background: #720acc;
+  background: radial-gradient(circle, #730acd 0%, rgba(28, 5, 61, 1) 100%);
 
   margin: 0;
 }
@@ -25,7 +21,7 @@ body {
 }
 
 #app {
-  z-index: 1;
+  z-index: 2;
 }
 
 #particles-js {
@@ -36,4 +32,99 @@ body {
   top: 0px;
   left: 0px;
   z-index: 0;
+}
+
+.trees {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  top: -20vh;
+
+  background: url("/trees.svg") no-repeat center center;
+
+  //   Make svg background stretch and scale horizontally by 1.2x
+  background-size: cover;
+  filter: invert(9%) sepia(28%) saturate(6256%) hue-rotate(254deg)
+    brightness(82%) contrast(110%) blur(2px);
+}
+
+.undertrees-cover {
+  position: absolute;
+  height: 30vh;
+  width: 100%;
+  top: 70vh;
+  background-color: #1d0640;
+  //   background-color: #3b1a6c;
+  z-index: 2;
+}
+
+.trees2 {
+  position: absolute;
+  width: 100%;
+  height: 70%;
+  z-index: 2;
+  top: 30vh;
+
+  background: url("/trees2.svg") no-repeat center center;
+
+  //   Make svg background stretch and scale horizontally by 1.2x
+  background-size: cover;
+  filter: invert(8%) sepia(81%) saturate(5540%) hue-rotate(265deg)
+    brightness(65%) contrast(102%) blur(1px);
+}
+
+.trees3 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  top: 25vh;
+  scale: 1 0.5;
+
+  background: url("/trees3.svg") no-repeat center center;
+
+  //   Make svg background stretch and scale horizontally by 1.2x
+  background-size: cover;
+  filter: invert(13%) sepia(35%) saturate(4571%) hue-rotate(252deg)
+    brightness(91%) contrast(101%);
+}
+
+.moon {
+  height: 60vh;
+  width: 60vh;
+  background-color: #fcfeda;
+  border-radius: 50%;
+  display: inline-block;
+
+  //   Align in middle of screen
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+
+  //   make it glow
+  box-shadow: 0 0 20px 10px #fcfeda;
+}
+
+// media phone:
+@media (max-width: 767px) {
+  .moon {
+    height: 40vh;
+    width: 40vh;
+  }
+}
+
+.card {
+  /* From https://css.glass */
+  //   background: rgba(248, 42, 255, 0.34);
+  background: #8849e674;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(6.7px);
+  -webkit-backdrop-filter: blur(6.7px);
+  border: 1px solid #fff;
+
+  color: #fff;
 }
