@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import { navigate } from "svelte-routing";
   import socket from "../socket";
+  import Submission from "./Submission.svelte";
 
   let mounted = false;
 
@@ -16,17 +17,19 @@
     if (mounted) return setActive(id, type);
     toSetActive.push({id, type})
     console.log(toSetActive)
-  })
+  });
 
   socket.on("grading-finished", (id, type) => {
     pending = pending.filter(submission => submission.id !== id && submission.type !== type)
-  })
+  });
 
-  function setActive(id, type) {
+  socket.on("grading-cancled", (id, type) => {setActive(id, type, false); console.log(id, type)})
+
+  function setActive(id, type, value=true) {
     pending = pending.map(submission => {
-      if (submission.id === id && submission.type === type) submission.active = true
+      if (submission.id === id && submission.type === type) submission.active = value
       return submission
-    })
+    });
   }
 
   function grade(submission: any) {

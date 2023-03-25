@@ -24,11 +24,20 @@ io.on("connection", (socket) => {
   });
 
   socket.on("grading-finished", (id: number, type: string) => {
+    removeAreGrading(id, type);
+    io.emit("grading-finished", id, type);
+  });
+
+  socket.on("grading-cancled", (id: number, type: string) => {
+    removeAreGrading(id, type);
+    io.emit("grading-cancled", id, type);
+  });
+
+  function removeAreGrading(id: number, type: string) {
     areGrading = areGrading.filter(
       (submission) => submission.type !== type && submission.id !== id
     );
-    io.emit("grading-finished", id, type);
-  });
+  }
 });
 
 export default io;

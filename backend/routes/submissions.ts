@@ -260,8 +260,12 @@ router.get(
 );
 
 router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  const { type, id, grading }: { type: string; id: number; grading: number } =
-    req.body;
+  const {
+    type,
+    id,
+    grading,
+    isFunny,
+  }: { type: string; id: number; grading: number; isFunny: boolean } = req.body;
   if (!type || !id || grading === null || grading === undefined)
     return sendError(res, "Type, Grading and ID required", 400);
   let table;
@@ -281,7 +285,7 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       return sendError(res, "Submission type is unkown", 400);
   }
 
-  const data = status ? { status } : { grading };
+  const data = status ? { status, isFunny } : { grading, isFunny };
 
   // @ts-expect-error
   const submission = await table.update({
@@ -314,6 +318,30 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
 
   return res.sendStatus(200);
+});
+
+router.get("/funny", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  const challange = prisma.challangesubmission.findMany({
+    where: { isFunny: true },
+    include: { team: true },
+  });
+  const puzzle = prisma.puzzlesubmission.findMany({
+    where: { isFunny: true },
+    include: { team: true },
+  });
+  const crazy88 = prisma.crazy88submission.findMany({
+    where: { isFunny: true },
+    include: { team: true },
+  });
+
+  Promise.all([challange, puzzle, crazy88])
+    .then(([challange, puzzle, crazy88]) =>
+      res.json({ submissions: [...challange, ...puzzle, ...crazy88] })
+    )
+    .catch((e) => {
+      console.error(e);
+      sendError(res);
+    });
 });
 
 export default router;

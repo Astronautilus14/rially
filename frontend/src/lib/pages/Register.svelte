@@ -68,7 +68,7 @@
                 class="form-control form-control-lg"
                 type="text"
                 name="name"
-                placeholder="Miel Monteur"
+                placeholder="Niels Rotmensen"
               />
               <div class="form-text">
                 So the committee knows you're not a goblin!

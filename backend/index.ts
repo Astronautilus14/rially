@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import authRouter from "./routes/auth";
 import teamsRouter from "./routes/teams";
 import submissionsRouter from "./routes/submissions";
+import leaderboardRouter from "./routes/leaderboard";
 import assert from "assert";
 import cors from "cors";
 import { server } from "./socket";
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use("/auth", authRouter);
 app.use("/teams", teamsRouter);
 app.use("/submissions", submissionsRouter);
+app.use("/leaderboard", leaderboardRouter);
 
 async function run() {
   const port = process.env.PORT ?? 8080;
