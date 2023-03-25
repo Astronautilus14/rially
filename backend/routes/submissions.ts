@@ -32,7 +32,7 @@ router.post(
     });
     const location = puzzleSubmissions.length + 1;
     for (const submission of puzzleSubmissions) {
-      if (submission.grading === null)
+      if (submission.status === "NEED_GRADING")
         return sendError(
           res,
           `Your team already submitted a puzzle for location ${
@@ -75,36 +75,37 @@ router.post(
       return sendError(res, "File link and Number required", 400);
 
     // Figure out where they are now
-    const gradedSubmissions = await prisma.puzzlesubmission.findMany({
+    const approvedSubmissions = await prisma.puzzlesubmission.findMany({
       where: {
         // @ts-expect-error
         teamId: req.data.team.id,
+        status: "APPROVED",
+      },
+    });
+    const location = approvedSubmissions.length;
+
+    // Figure out weather they already submitted
+    const challangesubmission = await prisma.challangesubmission.findFirst({
+      where: {
+        // @ts-expect-error
+        teamId: req.data.team.id,
+        number,
         NOT: {
-          grading: null,
+          OR: [{ grading: null }, { grading: 0 }],
         },
       },
     });
-    const location = gradedSubmissions.length;
 
-    // Figure out if they already submitted
-    const challangeSubmissions = await prisma.challangesubmission.findMany({
-      where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
-      },
-    });
-    for (const submission of challangeSubmissions) {
-      if (submission.location === location && submission.number === number)
-        return sendError(
-          res,
-          `Your team already submitted location challange ${number} for location ${location}. ${
-            "Your submission will be graded as soon as possible"
-              ? submission.grading === null
-              : ""
-          }`,
-          400
-        );
-    }
+    if (challangesubmission)
+      return sendError(
+        res,
+        `Your team already submitted a photo or video for crazy 88 task ${number}. ${
+          challangesubmission.grading === null
+            ? "Your submission will be graded as soon as possible"
+            : ""
+        }`,
+        400
+      );
 
     let submission;
     try {
@@ -140,24 +141,27 @@ router.post(
       return sendError(res, "File link and Number required", 400);
 
     // Figure out weather they already submitted
-    const crazy88submissions = await prisma.crazy88submission.findMany({
+    const crazy88submission = await prisma.crazy88submission.findFirst({
       where: {
         // @ts-expect-error
         teamId: req.data.team.id,
+        number,
+        NOT: {
+          OR: [{ grading: null }, { grading: 0 }],
+        },
       },
     });
-    for (const submission of crazy88submissions) {
-      if (submission.number === number)
-        return sendError(
-          res,
-          `Your team already submitted a photo or video for crazy 88 task ${number}. ${
-            submission.grading === null
-              ? "Your submission will be graded as soon as possible"
-              : ""
-          }`,
-          400
-        );
-    }
+
+    if (crazy88submission)
+      return sendError(
+        res,
+        `Your team already submitted a photo or video for crazy 88 task ${number}. ${
+          crazy88submission.grading === null
+            ? "Your submission will be graded as soon as possible"
+            : ""
+        }`,
+        400
+      );
 
     let submission;
     try {
@@ -190,7 +194,7 @@ function checkTeam(req: Request, res: Response, next: NextFunction) {
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const puzzles = prisma.puzzlesubmission.findMany({
     where: {
-      grading: null,
+      status: "NEED_GRADING",
     },
   });
   const challanges = prisma.challangesubmission.findMany({
@@ -248,7 +252,7 @@ router.get(
       where: { id },
     });
     if (!submission)
-      return sendError(res, "Combination type, id is unkown", 400);
+      return sendError(res, "Combination Type and ID is unkown", 404);
     return res.json({
       submission,
     });
@@ -258,9 +262,10 @@ router.get(
 router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { type, id, grading }: { type: string; id: number; grading: number } =
     req.body;
-  if (!type || !id || !grading)
-    return sendError(res, "Type, ID and Grading required", 400);
+  if (!type || !id || grading === null || grading === undefined)
+    return sendError(res, "Type, Grading and ID required", 400);
   let table;
+  let status = null;
   switch (type) {
     case "crazy88":
       table = prisma.crazy88submission;
@@ -269,16 +274,19 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       table = prisma.challangesubmission;
       break;
     case "puzzle":
+      status = grading > 0 ? "APPROVED" : "REJECTED";
       table = prisma.puzzlesubmission;
       break;
     default:
       return sendError(res, "Submission type is unkown", 400);
   }
 
+  const data = status ? { status } : { grading };
+
   // @ts-expect-error
   const submission = await table.update({
     where: { id },
-    data: { grading },
+    data,
     include: { team: true },
   });
   console.log(submission);

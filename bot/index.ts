@@ -33,18 +33,18 @@ const client = new discordjs.Client({
 
 client.on("guildMemberAdd", register);
 
-client.on("interactionCreate", (interaction) => {
+client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   switch (interaction.commandName) {
     case "register":
-      register(interaction.user);
+      await register(interaction.user, interaction);
       break;
     case "help":
-      help(interaction);
+      await help(interaction);
       break;
     case "submission":
-      submission(interaction);
+      await submission(interaction);
       break;
   }
 });
@@ -171,7 +171,13 @@ app.post("/grade", verifyToken, async (req, res) => {
     location?: number;
     grading: number;
   } = req.body;
-  if (!roleId || !channelId || !type || !grading)
+  if (
+    !roleId ||
+    !channelId ||
+    !type ||
+    grading === null ||
+    grading === undefined
+  )
     return res.status(400).json({
       message: "Role ID, Channel ID, Type and Grading are required",
     });
@@ -190,18 +196,32 @@ app.post("/grade", verifyToken, async (req, res) => {
     return res.status(400).json({
       message: "Channel not found",
     });
-  channel.send(
-    `Your ${type} submission ${
-      number ? "number " + number : ""
-    } has been graded with ${grading} point${grading > 1 ? "s" : ""}!`
-  );
+
+  if (type === "puzzle") {
+    channel.send(
+      `Your puzzle submission for location ${location} has been ${
+        grading < 1
+          ? "rejected"
+          : "approved! You can now see the location challanges and next puzzles in the puzzles categoty"
+      }`
+    );
+  } else {
+    channel.send(
+      // TODO dit nice maken voor rejection en puzzle submission
+      `Your ${type} submission ${number ? "number " + number : ""} has been ${
+        grading > 0
+          ? `graded with ${grading} point${grading > 1 ? "s" : ""}!`
+          : "rejected"
+      }`
+    );
+  }
 
   if (type !== "puzzle") return res.sendStatus(200);
 
   let role = guild.roles.cache.find((role) => role.id == roleId);
   if (!role) role = (await guild.roles.fetch(roleId)) ?? undefined;
   if (!role)
-    return res.status(400).json({
+    return res.status(404).json({
       message: "Role not found",
     });
 

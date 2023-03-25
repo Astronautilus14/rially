@@ -1,12 +1,16 @@
 import discordjs from "discord.js";
 import axios from "axios";
 
-export default function (interaction: discordjs.ChatInputCommandInteraction) {
-  const type = interaction.options.getSubcommand();
+export default async function (
+  interaction: discordjs.ChatInputCommandInteraction
+) {
+  const type = interaction.options.getSubcommand().toLowerCase();
+  const fileLink = await checkMedia(interaction);
+  if (!fileLink) return await interaction.reply("Media not found");
+
   switch (type) {
     case "puzzle":
       {
-        const fileLink = checkPhoto(interaction);
         axios
           .post(
             `${process.env.API_URL!}/submissions/puzzle`,
@@ -36,7 +40,6 @@ export default function (interaction: discordjs.ChatInputCommandInteraction) {
 
     case "challange":
       {
-        const fileLink = checkPhoto(interaction);
         const number = interaction.options.getInteger("number", true);
         axios
           .post(
@@ -68,17 +71,6 @@ export default function (interaction: discordjs.ChatInputCommandInteraction) {
 
     case "crazy88":
       {
-        const media = interaction.options.getAttachment("media", true);
-        if (
-          !(
-            media.contentType?.startsWith("image") ||
-            media.contentType?.startsWith("video")
-          )
-        )
-          return interaction.reply(
-            "That media type is not supported. Please send a photo or video"
-          );
-        const fileLink = media.url;
         const number = interaction.options.getInteger("number", true);
 
         axios
@@ -108,14 +100,26 @@ export default function (interaction: discordjs.ChatInputCommandInteraction) {
           });
       }
       break;
+    default:
+      interaction.reply(
+        "Something went wrong. Type is unkown! Please contact the committee"
+      );
   }
 }
 
-function checkPhoto(interaction: discordjs.ChatInputCommandInteraction) {
-  const media = interaction.options.getAttachment("photo", true);
-  if (!media.contentType?.startsWith("image")) {
-    interaction.reply("That media type is not supported. Please send a photo");
-    return null;
+async function checkMedia(interaction: discordjs.ChatInputCommandInteraction) {
+  let media: string | null = null;
+  try {
+    media = interaction.options.getAttachment("photo", true).url;
+  } catch (error) {
+    console.error(error);
   }
-  return media.url;
+  if (!media) return null;
+
+  if (/.*.(png|jpg|jpeg|gif|webp|avif|apng|bmp|mp4|ogg|webm)$/i.test(media))
+    return media;
+  await interaction.reply(
+    "That media type is not supported. Please use one of the following file types: png, jpg, jpeg, gif, webp, avif, apng, bmp, mp4, ogg or webm"
+  );
+  return null;
 }
