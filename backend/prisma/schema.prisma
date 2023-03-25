@@ -24,38 +24,47 @@ model team {
   id                  Int                   @id @default(autoincrement())
   name                String                @unique
   members             user[]
-  isCommitte          Boolean               @default(false)
-  channelId           Int?
-  roleId              Int?
+  isCommittee         Boolean               @default(false)
+  channelId           String?
+  roleId              String?
   puzzlesubmission    puzzlesubmission[]
   challangesubmission challangesubmission[]
   crazy88submission   crazy88submission[]
 }
 
+enum status {
+  NEED_GRADING
+  APPROVED
+  REJECTED
+}
+
 model puzzlesubmission {
-  id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
+  id       Int     @id @default(autoincrement())
+  team     team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId   Int
-  fileLink String @unique
-  grading  Int?
+  fileLink String  @unique
+  status   status  @default(NEED_GRADING)
   location Int
+  isFunny  Boolean @default(false)
 }
 
 model challangesubmission {
-  id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
+  id       Int     @id @default(autoincrement())
+  team     team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId   Int
-  fileLink String @unique
+  fileLink String  @unique
   grading  Int?
   location Int
   number   Int
+  isFunny  Boolean @default(false)
 }
 
 model crazy88submission {
-  id       Int    @id @default(autoincrement())
-  team     team   @relation(fields: [teamId], references: [id])
+  id       Int     @id @default(autoincrement())
+  team     team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId   Int
-  fileLink String @unique
+  fileLink String  @unique
   grading  Int?
   number   Int
+  isFunny  Boolean @default(false)
 }

@@ -10,22 +10,37 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { teamName } = req.body;
   if (!teamName) return sendError(res, "Team name is required", 400);
 
-  const team = await prisma.team
-    .create({
+  let team;
+  try {
+    team = await prisma.team.create({
       data: {
         name: teamName,
       },
-    })
-    .catch((error) => {
-      if (error.code === "P2002" && error.meta?.target === "team_name_key")
-        return sendError(res, "Team name already exists", 400);
     });
-
+  } catch (error: any) {
+    if (error.code === "P2002" && error.meta?.target === "team_name_key")
+      return sendError(res, "Team name already exists", 400);
+    console.error(error);
+  }
   if (!team) return sendError(res);
 
-  const discordRes = await axios.post(`${process.env.BOT_API_URL}`, {
-    name: teamName,
-  });
+  let discordRes;
+  try {
+    discordRes = await axios.post(
+      `${process.env.BOT_API_URL}/teams`,
+      {
+        name: teamName,
+      },
+      {
+        headers: {
+          Authorization: process.env.BOT_API_KEY!,
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    return sendError(res);
+  }
 
   await prisma.team.update({
     where: {
@@ -40,19 +55,39 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
 });
 
 router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  const { teamId } = req.body;
-  if (!teamId) return sendError(res, "No team id", 400);
+  const { teamId }: { teamId: number } = req.body;
+  if (!teamId) return sendError(res, "Team ID required", 400);
 
-  prisma.team
-    .delete({
+  let team;
+  try {
+    team = await prisma.team.delete({
       where: {
         id: teamId,
       },
-    })
-    .then(() => res.sendStatus(200))
-    .catch((error) => {
-      res.sendStatus(500);
     });
+  } catch (error) {
+    console.error(error);
+    return sendError(res);
+  }
+
+  if (!team) return sendError(res, "Team ID not found", 400);
+  if (!team.channelId || !team.roleId) return res.sendStatus(200);
+
+  try {
+    await axios.delete(`${process.env.BOT_API_URL}/teams`, {
+      data: {
+        channelId: team.channelId,
+        roleId: team.roleId,
+      },
+      headers: {
+        Authorization: process.env.BOT_API_KEY,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return sendError(res);
+  }
+  return res.sendStatus(200);
 });
 
 router.patch(
@@ -82,43 +117,136 @@ router.patch(
   }
 );
 
-router.post("/member", tokenCheck, teamCheck, isCommittee, (req, res) => {
+router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { userId, teamId } = req.body;
   if (!userId || !teamId)
-    return sendError(res, "User id and team id are required", 400);
-  prisma.user
-    .update({
+    return sendError(res, "User ID and Team ID are required", 400);
+
+  let user;
+  try {
+    user = await prisma.user.update({
       where: {
         id: userId,
       },
       data: {
         teamId,
       },
-    })
-    .then(() => res.sendStatus(200))
-    .catch((error) => {
-      console.error(error);
-      return sendError(res);
+      include: {
+        team: true,
+      },
     });
+  } catch (error) {
+    console.error(error);
+  }
+  if (!user) return sendError(res, "User ID is now known", 400);
+
+  try {
+    await axios.post(
+      `${process.env.BOT_API_URL}/teams/member`,
+      {
+        roleId: user.team?.roleId,
+        userId: user.discordId,
+      },
+      {
+        headers: {
+          Authorization: process.env.BOT_API_KEY!,
+        },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    return sendError(res);
+  }
+
+  return res.sendStatus(200);
 });
 
-router.delete("/member", tokenCheck, teamCheck, isCommittee, (req, res) => {
-  const { userId, newTeamId } = req.body;
-  if (!userId) return sendError(res, "User id is required", 400);
-  prisma.user
-    .update({
-      where: {
-        id: userId,
-      },
-      data: {
-        teamId: newTeamId ?? null,
-      },
-    })
-    .then(() => res.sendStatus(200))
-    .catch((error) => {
+router.delete(
+  "/member",
+  tokenCheck,
+  teamCheck,
+  isCommittee,
+  async (req, res) => {
+    const { userId, newTeamId } = req.body;
+    if (!userId) return sendError(res, "User id is required", 400);
+
+    let user;
+    try {
+      user = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          teamId: newTeamId ?? null,
+        },
+      });
+    } catch (error) {
       console.error(error);
       return sendError(res);
+    }
+    if (!user) return sendError(res, "User not found", 400);
+    if (!user.discordId) return res.sendStatus(200);
+
+    try {
+      await axios.delete(`${process.env.BOT_API_URL}/teams/member`, {
+        data: {
+          discordId: user.discordId,
+        },
+        headers: {
+          Authorization: process.env.BOT_API_KEY,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      return sendError(res);
+    }
+  }
+);
+
+router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) =>
+  res.json(await prisma.team.findMany())
+);
+
+router.get("/:id", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) return sendError(res);
+  const data = await prisma.team.findUnique({
+    where: { id },
+    include: {
+      members: {
+        select: { username: true, name: true, id: true, discordId: true },
+      },
+    },
+  });
+  return res.json(data);
+});
+
+router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  try {
+    const users = prisma.user.findMany({
+      where: {
+        teamId: null,
+      },
+      select: {
+        username: true,
+        name: true,
+        id: true,
+      },
     });
+
+    const teams = prisma.team.findMany({
+      where: {
+        isCommittee: false,
+      },
+    });
+
+    Promise.all([users, teams]).then(([users, teams]) =>
+      res.json({ users, teams })
+    );
+  } catch (error) {
+    console.error(error);
+    return sendError(res);
+  }
 });
 
 export default router;

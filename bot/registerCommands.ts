@@ -60,7 +60,7 @@ const commands = [
         .setDescription("Submit a crazy 88 task")
         .addAttachmentOption((option) =>
           option
-            .setName("media")
+            .setName("photo")
             .setDescription("Photo (or video) of your submission")
             .setRequired(true)
         )
