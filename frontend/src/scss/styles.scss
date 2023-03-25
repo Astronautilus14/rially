@@ -5,13 +5,10 @@ body {
   height: 100%;
   width: 100%;
   font-family: "Roboto", sans-serif;
-  font-size: 14px;
-  //   color: white;
+  //   font-size: 14px;
 
   background: #720acc;
   background: radial-gradient(circle, #730acd 0%, rgba(28, 5, 61, 1) 100%);
-
-  //   margin: 0;
 }
 
 /* Fix body not aligning on top: */
@@ -115,16 +112,3 @@ body {
     width: 40vh;
   }
 }
-
-// .card {
-//   /* From https://css.glass */
-//   //   background: rgba(248, 42, 255, 0.34);
-//   background: #9857fa74;
-//   border-radius: 16px;
-//   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-//   backdrop-filter: blur(6.7px);
-//   -webkit-backdrop-filter: blur(6.7px);
-//   border: 1px solid #fff;
-
-//   color: #fff;
-// }

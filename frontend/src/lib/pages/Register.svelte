@@ -1,4 +1,6 @@
 <script lang="ts">
+  import GlassCard from "../../components/GlassCard.svelte";
+  import QuoteCard from "../../components/QuoteCard.svelte";
   import settings from "../settings.json";
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -38,80 +40,59 @@
   };
 </script>
 
-<main data-bs-theme="dark">
-  <div class="card">
-    <div class="card-body">
-      <h1 class="card-title">Register now!</h1>
-      <hr />
-      {#if succes}
-        <h2>
-          Success! You can now return to the discord server, have a magical
-          ride!
-        </h2>
-      {:else}
-        <form on:submit|preventDefault={registerSubmit}>
-          <div class="section">
-            <label class="form-label" for="username">Username</label>
-            <input
-              class="form-control form-control-lg"
-              type="text"
-              name="username"
-              placeholder="Miel Monteur"
-            />
-            <div class="form-text">Your username is visible to everyone</div>
-          </div>
-
-          <div>
-            <label class="form-label" for="name">Name</label>
-            <input
-              class="form-control form-control-lg"
-              type="text"
-              name="name"
-            />
-            <div class="form-text">
-              So the committee knows your not a goblin!
+<main class="container">
+  <div class="row justify-content-md-center">
+    <div class="col-12 col-sm-10">
+      <GlassCard title="Register">
+        {#if succes}
+          <h2>
+            Success! You can now return to the discord server, have a magical
+            ride!
+          </h2>
+        {:else}
+          <form on:submit|preventDefault={registerSubmit}>
+            <div class="mb-3">
+              <label class="form-label" for="username">Username</label>
+              <input
+                class="form-control form-control-lg"
+                type="text"
+                name="username"
+                placeholder="BeunhaasHans"
+              />
+              <div class="form-text">Your username is visible to everyone</div>
             </div>
-          </div>
 
-          <input
-            type="submit"
-            class="btn btn-primary"
-            value={loading ? "Give me a moment..." : "Register"}
-          />
-        </form>
-        {#if error}
-          <p class="error">{error}</p>
+            <div class="mb-3">
+              <label class="form-label" for="name">Name</label>
+              <input
+                class="form-control form-control-lg"
+                type="text"
+                name="name"
+                placeholder="Miel Monteur"
+              />
+              <div class="form-text">
+                So the committee knows you're not a goblin!
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <input
+                type="submit"
+                class="btn btn-primary btn-lg"
+                value={loading ? "Give me a moment..." : "Register"}
+              />
+            </div>
+          </form>
+          {#if error}
+            <p class="error">{error}</p>
+          {/if}
         {/if}
-      {/if}
+      </GlassCard>
+    </div>
+  </div>
+  <div class="row justify-content-md-center">
+    <div class="col-12 col-sm-10">
+      <QuoteCard />
     </div>
   </div>
 </main>
-
-<style lang="scss">
-  //   main {
-  //     display: flex;
-  //     align-items: center;
-  //     flex-direction: column;
-
-  //     form {
-  //       display: flex;
-  //       flex-direction: column;
-  //       gap: 3em;
-
-  //       span {
-  //         display: flex;
-  //         flex-direction: column;
-  //         gap: 1em;
-
-  //         .sub-label {
-  //           font-size: 0.8rem;
-  //         }
-  //       }
-  //     }
-
-  //     .error {
-  //       color: red;
-  //       text-align: center;
-  //     }
-  //   }
-</style>
