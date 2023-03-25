@@ -5,7 +5,11 @@ import express from "express";
 export const server = http.createServer(express());
 const io = new SocketServer(server, {
   cors: {
-    origin: ["http://127.0.0.1:5173"],
+    origin: [
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:8083/",
+      "https://rially.nautdevroome.nl",
+    ],
   },
 });
 
