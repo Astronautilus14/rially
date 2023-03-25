@@ -33,11 +33,6 @@
     <div class="col-12 col-sm-10">
       <GlassCard title="Login">
         <form on:submit|preventDefault={handelSubmit}>
-          <!-- <label for="username">Username</label>
-          <input type="text" name="username" id="username" required />
-          <label for="password">Password</label>
-          <input type="password" name="password" id="password" required />
-          <input type="submit" value="Log in" /> -->
           <div class="mb-3">
             <label class="form-label" for="username">Username</label>
             <input
@@ -45,6 +40,7 @@
               type="text"
               name="username"
               placeholder="BeunhaasHans"
+              required
             />
             <div class="form-text">What are you called?</div>
           </div>
@@ -56,6 +52,7 @@
               type="password"
               name="password"
               placeholder="*******"
+              required
             />
             <div class="form-text">Password123 is not secure</div>
           </div>
