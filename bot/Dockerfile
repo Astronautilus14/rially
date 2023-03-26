@@ -1,10 +1,10 @@
 FROM node:16
 
-WORKDIR /app
-
 RUN npm run register
 
 RUN npm run build
+
+WORKDIR /app
 
 COPY package*.json ./
 
