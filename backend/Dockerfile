@@ -8,6 +8,7 @@ COPY . ./src
 RUN ls -a
 RUN npm install
 RUN npx prisma migrate deploy
+RUN npx prisma generate
 RUN npm run build
 
 ## this is stage two , where the app actually runs
