@@ -2,6 +2,7 @@ FROM node:16
 WORKDIR /usr
 COPY package.json ./
 COPY tsconfig.json ./
+COPY .env ./
 COPY prisma ./
 COPY . ./src
 RUN ls -a
