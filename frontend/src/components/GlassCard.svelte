@@ -1,10 +1,11 @@
 <script>
   export let title = "";
   export let header = "";
+  export let keepBootstrap = false;
 </script>
 
 <div>
-  <div class="card mx-auto mt-5">
+  <div class={(keepBootstrap ? "" : "glass") + " card mx-auto mt-5"}>
     {#if header}
       <div class="card-header">
         {header}
@@ -23,7 +24,7 @@
 </div>
 
 <style lang="scss">
-  .card {
+  .glass {
     /* From https://css.glass */
     //   background: rgba(248, 42, 255, 0.34);
     background: #140835ae;
