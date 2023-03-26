@@ -1,17 +1,20 @@
 FROM node:16
-
-WORKDIR /app
-
+WORKDIR /usr
+COPY package.json ./
+COPY tsconfig.json ./
+COPY .env ./
+COPY prisma ./
+COPY . ./src
+RUN ls -a
+RUN npm install
+RUN npx prisma migrate deploy
+RUN npx prisma generate
 RUN npm run build
 
-COPY package*.json ./
-
-RUN npm install
-
-COPY ./dist .
-
-COPY .env .
-
-RUN npx prisma migrate deploy
-
-CMD [ "node", "index.js" ]
+## this is stage two , where the app actually runs
+FROM node:16
+WORKDIR /usr
+COPY package.json ./
+RUN npm install --only=production
+COPY --from=0 /usr/dist .
+CMD ["node","index.js"]
