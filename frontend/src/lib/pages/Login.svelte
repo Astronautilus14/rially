@@ -19,12 +19,18 @@
         password,
       }),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.ok) return res.json();
+        return Promise.reject(res);
+      })
       .then((data) => {
         localStorage.setItem("rially::token", data.token);
         navigate("/grading", { replace: true });
       })
-      .catch(console.error);
+      .catch((res) => {
+        console.log(res);
+        alert(res.json().message);
+      });
   }
 </script>
 

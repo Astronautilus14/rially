@@ -10,7 +10,7 @@
   import Teams from "./lib/pages/Teams.svelte";
   import Team from "./lib/pages/Team.svelte";
   import Funny from "./lib/pages/Funny.svelte";
-  import Leaderboard from "./lib/pages/Leaderboard.svelte"
+  import Leaderboard from "./lib/pages/Leaderboard.svelte";
   import PublicTeam from "./lib/pages/PublicTeam.svelte";
 
   // Import our custom CSS
@@ -19,17 +19,29 @@
 
   export let url = "";
   const location = window.location.href.split("/");
-  const path = location[location.length-1];
+  const path = location[location.length - 1];
   const isLoggedIn = !!localStorage.getItem("rially::token");
 </script>
 
-<Router url="{url}">
+<Router {url}>
   {#if path !== "login" && path !== "register" && isLoggedIn}
-  <Link to="/teams">Teams</Link>
-  <Link to="/people">Lonely people</Link>
-  <Link to="/grading">Grading</Link>
-  <Link to="/funny">Funny</Link>
-  <Link to="/leaderboard">Leaderboard</Link>
+    <div>
+      <nav class="navbar navbar-expand-lg bg-primary">
+        <div class="container-fluid">
+          <Link to="/" class="navbar-brand mb-0 h1">RIAlly</Link>
+          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+              <Link to="/" class="nav-link">Home</Link>
+              <Link to="/teams" class="nav-link">Teams</Link>
+              <Link to="/people" class="nav-link">Lonely people</Link>
+              <Link to="/grading" class="nav-link">Grading</Link>
+              <Link to="/funny" class="nav-link">Funny</Link>
+              <Link to="/leaderboard" class="nav-link">Leaderboard</Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
   {/if}
   <div data-bs-theme="dark">
     <Route path="register" component={Register} />
