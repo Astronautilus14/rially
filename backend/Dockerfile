@@ -5,7 +5,7 @@ COPY tsconfig.json ./
 COPY . ./src
 RUN ls -a
 RUN npm install
-RUN npx prisma migrate production
+RUN npx prisma migrate deploy
 RUN npm run build
 
 ## this is stage two , where the app actually runs
