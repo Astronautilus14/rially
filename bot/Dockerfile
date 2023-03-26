@@ -2,12 +2,16 @@ FROM node:16
 
 WORKDIR /app
 
+RUN npm run register
+
+RUN npm run build
+
 COPY package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY ./dist .
 
-RUN npm run register
+COPY .env .
 
-CMD [ "npm", "start" ]
+CMD [ "node", "index.js" ]
