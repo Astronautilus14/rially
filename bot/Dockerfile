@@ -5,7 +5,7 @@ COPY tsconfig.json ./
 COPY .env ./
 RUN npm install
 COPY . ./src
-RUN npx run register
+RUN npm run register
 RUN npm run build
 
 ## this is stage two , where the app actually runs
