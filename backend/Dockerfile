@@ -17,5 +17,6 @@ COPY package*.json ./
 RUN npm install --only=production
 COPY --from=0 /usr/dist .
 COPY --from=0 /usr/prisma ./prisma
+COPY --from=0 /usr/.env .
 RUN npx prisma generate
 CMD ["node","index.js"]
