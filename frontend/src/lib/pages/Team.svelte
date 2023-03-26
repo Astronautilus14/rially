@@ -83,7 +83,7 @@
             {#if error}
               <p class="error">{error}</p>
             {/if}
-            <div class="col-6">
+            <div class="col-12 col-md-6">
               <h2>Team members</h2>
               {#if team.members.length === 0}
                 <p>This team has no members yet</p>
@@ -126,7 +126,7 @@
               {/if}
             </div>
 
-            <div class="col-2">
+            <div class="col-12 col-md-2">
               <h2>Data</h2>
               <div class="data">
                 <p>ID: {id}</p>
@@ -140,7 +140,7 @@
               </div>
             </div>
 
-            <div class="col-4">
+            <div class="col-12 col-md-4">
               <h2>Actions</h2>
               <form class="mb-3">
                 <label for="newName" class="form-label">Change team name</label>
