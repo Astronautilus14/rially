@@ -8,6 +8,8 @@ COPY tsconfig.json ./
 
 RUN npm install
 
+COPY . .
+
 RUN npm run build
 
 FROM node:16
