@@ -1,10 +1,10 @@
 FROM node:16
-RUN npm run register
 WORKDIR /usr
 COPY package*.json ./
 COPY tsconfig.json ./
 COPY .env ./
 RUN npm install
+RUN npm run register
 COPY . ./src
 RUN npm run build
 
