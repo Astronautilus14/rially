@@ -207,20 +207,6 @@ router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) =>
   res.json(await prisma.team.findMany())
 );
 
-router.get("/:id", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) return sendError(res);
-  const data = await prisma.team.findUnique({
-    where: { id },
-    include: {
-      members: {
-        select: { username: true, name: true, id: true, discordId: true },
-      },
-    },
-  });
-  return res.json(data);
-});
-
 router.get("/:id/public", async (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
@@ -261,6 +247,20 @@ router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     console.error(error);
     return sendError(res);
   }
+});
+
+router.get("/:id", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
+  const data = await prisma.team.findUnique({
+    where: { id },
+    include: {
+      members: {
+        select: { username: true, name: true, id: true, discordId: true },
+      },
+    },
+  });
+  return res.json(data);
 });
 
 export default router;

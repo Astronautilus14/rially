@@ -13,10 +13,16 @@
         Authorization: localStorage.getItem("rially::token")
       }
     })
-    .then(res => res.json())
+    .then(async (res) => {
+      if (res.ok) return res.json();
+      throw new Error((await res.json()).message)
+    })
     .then((data) => {
       users = data.users;
       teams = data.teams;
+    })
+    .catch((e) => {
+      error = e;
     })
   });
 

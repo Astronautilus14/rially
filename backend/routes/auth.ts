@@ -160,7 +160,10 @@ export function tokenCheck(req: Request, res: Response, next: NextFunction) {
   if (!token) return sendError(res, "No authorization token", 401);
   jwt.verify(token, secretKey, (err, payload) => {
     if (err) return sendError(res, "Invalid token", 401);
-    if (!payload) return sendError(res);
+    if (!payload) {
+      console.error("No payload in tokeCheck");
+      return sendError(res);
+    }
     req.data = {
       // @ts-expect-error
       uid: payload.uid,
@@ -177,7 +180,12 @@ export async function teamCheck(
   next: NextFunction
 ) {
   const uid = req.data?.uid;
-  if (!uid) return sendError(res);
+  if (!uid) {
+    console.error(
+      "No UID in teamCheck, did you call teamCheck before tokenCheck?"
+    );
+    return sendError(res);
+  }
   const user = await prisma.user.findUnique({
     where: {
       id: uid,
@@ -186,7 +194,10 @@ export async function teamCheck(
       team: true,
     },
   });
-  if (!user) return sendError(res);
+  if (!user) {
+    console.error("User not found in teamCheck");
+    return sendError(res);
+  }
   if (!user.team)
     return sendError(res, "You need to be in a team for this", 403);
   // @ts-expect-error

@@ -4,9 +4,13 @@ import type { Response } from "express";
 const prisma = new PrismaClient();
 export default prisma;
 
-export function sendError(res: Response, msg?: string, status?: number) {
+export function sendError(
+  res: Response,
+  msg = "An error occured",
+  status = 500
+) {
   const data = JSON.stringify({
-    message: msg ?? "An error occured",
+    message: msg,
   });
-  res.status(status ?? 500).send(data);
+  res.status(status).send(data);
 }
