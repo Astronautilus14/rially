@@ -2,6 +2,7 @@
   import settings from "../settings.json";
   import { Link, navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
+  import { isLoggedIn } from "../../stores/accountStore";
 
   function handelSubmit(event) {
     const data = new FormData(event.target);
@@ -25,6 +26,7 @@
       })
       .then((data) => {
         localStorage.setItem("rially::token", data.token);
+        isLoggedIn.set(true);
         navigate("/grading", { replace: true });
       })
       .catch((res) => {

@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Link } from "svelte-routing";
-  import settings from "../settings.json"
+  import GlassCard from "../../components/GlassCard.svelte";
+  import settings from "../settings.json";
 
   let data;
   let error = "";
@@ -15,140 +16,155 @@
     fetch(`${settings.api_url}/leaderboard${isLoggedIn ? "" : "/public"}`, {
       headers: {
         Authorization: localStorage.getItem("rially::token"),
-      }
+      },
     })
-    .then(async (res) => {
-      if (res.ok) return res.json();
-      throw new Error((await res.json()).message);
-    })
-    .then(body => {
-      error = body.message;
-      if (error) return;
-      data = body.teams;
-      isPublic = body.isPublic ?? true;
-    })
-    .catch((e) => error = e )
-    .finally(() => loading = false)
+      .then(async (res) => {
+        if (res.ok) return res.json();
+        throw new Error((await res.json()).message);
+      })
+      .then((body) => {
+        error = body.message;
+        if (error) return;
+        data = body.teams;
+        isPublic = body.isPublic ?? true;
+      })
+      .catch((e) => (error = e))
+      .finally(() => (loading = false));
   });
 
   function handlePublicSwitch() {
-    isPublic = !isPublic
+    isPublic = !isPublic;
     fetch(`${settings.api_url}/leaderboard`, {
       method: "PATCH",
       headers: {
         Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        setPublic: isPublic
-      })
+        setPublic: isPublic,
+      }),
     })
-    .then( async (res) => {
+      .then(async (res) => {
         if (res.ok) return;
         throw new Error((await res.json()).message);
-      }
-    )
-    .catch((e) => {
-      error = e
-      isPublic = !isPublic;
-    })
+      })
+      .catch((e) => {
+        error = e;
+        isPublic = !isPublic;
+      });
   }
 </script>
 
-<main>
-  <h1>Leaderboard</h1>
-  <hr>
-  {#if loading}
-  <p>Loading...</p>
-  {:else}
-  {#if error}
-  <p class="error">{error}</p>
-  {/if}
-  <table>
-    <thead>
-      <th>Team</th>
-      <th>Score</th>
-    </thead>
-      {#if data}
-      {#each data as team}
-        <tr>
-          <td><Link to={`/teams/${team.id}/public`}>{team.name}</Link></td>
-          <td>{team.score}</td>
-        </tr>
-      {/each}
-      {/if}
-  </table>
-  {/if}
-  {#if isLoggedIn}
-  <div>
-    <h3>Public leaderboard</h3>
-    <label class="switch">
-      <input type="checkbox" bind:checked={isPublic} on:click={handlePublicSwitch}>
-      <span class="slider round"></span>
-    </label>
+<main class="contianer">
+  <div class="row justify-content-md-center">
+    <div class="col-12 col-sm-10">
+      <GlassCard title="Leaderboard">
+        {#if loading}
+          <p>Loading...</p>
+        {:else}
+          {#if error}
+            <p class="error">{error}</p>
+          {/if}
+          {#if isLoggedIn}
+            <div class="mb-5">
+              <h3>Public leaderboard</h3>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  bind:checked={isPublic}
+                  on:click={handlePublicSwitch}
+                />
+                <span class="slider round" />
+              </label>
+            </div>
+          {/if}
+          <table class="table table-bordered border-white">
+            <thead>
+              <tr>
+                <th>Place</th>
+                <th>Team</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            {#if data}
+              <tbody>
+                {#each data as team, i}
+                  <tr>
+                    <td>{i + 1}</td>
+                    <td>
+                      <Link to={`/teams/${team.id}/public`}>{team.name}</Link>
+                    </td>
+                    <td>{team.score}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            {/if}
+          </table>
+        {/if}
+      </GlassCard>
+    </div>
   </div>
-  {/if}
 </main>
 
 <style>
-/* W3 schools copy pasta */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
+  /* W3 schools copy pasta */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
 
-.switch input { 
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
 
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: 0.4s;
+    transition: 0.4s;
+  }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: 0.4s;
+    transition: 0.4s;
+  }
 
-input:checked + .slider {
-  background-color: #2196F3;
-}
+  input:checked + .slider {
+    background-color: #2196f3;
+  }
 
-input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
-}
+  input:focus + .slider {
+    box-shadow: 0 0 1px #2196f3;
+  }
 
-input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
+  input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+  }
 
-/* Rounded sliders */
-.slider.round {
-  border-radius: 34px;
-}
+  /* Rounded sliders */
+  .slider.round {
+    border-radius: 34px;
+  }
 
-.slider.round:before {
-  border-radius: 50%;
-}
+  .slider.round:before {
+    border-radius: 50%;
+  }
 </style>

@@ -16,7 +16,8 @@
     })
       .then((res) => {
         if (res.ok) return res.json();
-        if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
+        if (res.status === 401 || res.status === 403)
+          return navigate("/login", { replace: true });
         res.json().then((data) => (error = data.message));
       })
       .then((data) => {

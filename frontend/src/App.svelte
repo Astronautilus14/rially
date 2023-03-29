@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Router, Link, Route } from "svelte-routing";
+  import { isLoggedIn } from "./stores/accountStore";
 
   import Register from "./lib/pages/Register.svelte";
   import Home from "./lib/pages/Home.svelte";
@@ -21,7 +22,6 @@
   export let url = "";
   const location = window.location.href.split("/");
   const path = location[location.length - 1];
-  const isLoggedIn = !!localStorage.getItem("rially::token");
 </script>
 
 <Router {url}>
@@ -43,8 +43,8 @@
         </div>
       </nav>
     </div>
-    {/if}
-    <div data-bs-theme="dark">
+  {/if}
+  <div data-bs-theme="dark">
     <Route path="register/committee" component={RegisterCommittee} />
     <Route path="register" component={Register} />
     <Route path="grading" component={Grading} />
