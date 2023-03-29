@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE `challangesubmission` ADD COLUMN `timeSubmitted` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+
+-- AlterTable
+ALTER TABLE `crazy88submission` ADD COLUMN `timeSubmitted` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+
+-- AlterTable
+ALTER TABLE `puzzlesubmission` ADD COLUMN `timeSubmitted` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);

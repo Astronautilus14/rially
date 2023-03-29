@@ -33,34 +33,37 @@ model team {
 }
 
 model puzzlesubmission {
-  id       Int     @id @default(autoincrement())
-  team     team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId   Int
-  fileLink String  @unique
-  grading  Int?
-  location Int
-  isFunny  Boolean @default(false)
+  id            Int      @id @default(autoincrement())
+  team          team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId        Int
+  fileLink      String   @unique
+  grading       Int?
+  location      Int
+  isFunny       Boolean  @default(false)
+  timeSubmitted DateTime @default(now())
 }
 
 model challangesubmission {
-  id       Int     @id @default(autoincrement())
-  team     team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId   Int
-  fileLink String  @unique
-  grading  Int?
-  location Int
-  number   Int
-  isFunny  Boolean @default(false)
+  id            Int      @id @default(autoincrement())
+  team          team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId        Int
+  fileLink      String   @unique
+  grading       Int?
+  location      Int
+  number        Int
+  isFunny       Boolean  @default(false)
+  timeSubmitted DateTime @default(now())
 }
 
 model crazy88submission {
-  id       Int     @id @default(autoincrement())
-  team     team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId   Int
-  fileLink String  @unique
-  grading  Int?
-  number   Int
-  isFunny  Boolean @default(false)
+  id            Int      @id @default(autoincrement())
+  team          team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId        Int
+  fileLink      String   @unique
+  grading       Int?
+  number        Int
+  isFunny       Boolean  @default(false)
+  timeSubmitted DateTime @default(now())
 }
 
 model variables {

@@ -39,7 +39,7 @@ router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     UNION
     SELECT grading, teamId FROM crazy88submission
     UNION
-    SELECT grading, teamId from puzzlesubmission
+    SELECT grading, teamId FROM puzzlesubmission
   ) AS t, team
   WHERE t.teamId = team.id
   AND team.isCommittee = 0
@@ -54,9 +54,10 @@ router.patch("/", tokenCheck, teamCheck, isCommittee, (req, res) => {
     return res.status(400).json({ message: "setPublic is required" });
 
   prisma.variables
-    .update({
+    .upsert({
       where: { key: "publicLeaderboard" },
-      data: { value: setPublic.toString() },
+      update: { value: setPublic.toString() },
+      create: { key: "publicLeaderboard", value: setPublic.toString() },
     })
     .then(() => res.sendStatus(200))
     .catch((error) => {

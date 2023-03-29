@@ -253,8 +253,27 @@ router.get(
     });
     if (!submission)
       return sendError(res, "Combination Type and ID is unkown", 404);
+
+    const speedPlace =
+      // @ts-expect-error
+      (await table.count({
+        where: {
+          timeSubmitted: {
+            lt: submission.timeSubmitted,
+          },
+          number: submission.number,
+          location: submission.location,
+          NOT: {
+            grading: {
+              gt: 0,
+            },
+          },
+        },
+      })) + 1;
+
     return res.json({
       submission,
+      speedPlace,
     });
   }
 );

@@ -13,6 +13,7 @@
   let error = "";
   let isFunny = false;
   let isGraded = false;
+  let speedPlace: number;
 
   onMount(async () => {
     fetch(`${settings.api_url}/submissions/${type}/${id}`, {
@@ -29,6 +30,7 @@
         submission = data.submission;
         isFunny = data.submission.isFunny;
         isGraded = data.submission.grading ? true : false;
+        speedPlace = data.speedPlace;
       })
       .finally(() => (loading = false));
   });
@@ -86,6 +88,8 @@
               <p>Location: {submission?.location}</p>
               <p>Team id: {submission?.teamId}</p>
               <p>Grade: {submission?.grading ?? "not graded yet"}</p>
+              <p>Speed place: {speedPlace}{speedPlace === 1 ? "st" : speedPlace === 2 ? "snd" : speedPlace === 3 ? "rd" : "th"}</p>
+              <p>Submission time: {(new Date(submission?.timeSubmitted)).toTimeString().split(" ")[0]}</p>
             </div>
 
             <div class="actions col-6 col-md-3">
@@ -99,21 +103,26 @@
               <form on:submit|preventDefault={handleApprove} class="">
                 <input
                   type="number"
+                  value={type === "puzzle" ? (5 + Math.max(4-speedPlace, 0)).toString() : null}
                   name="score"
                   placeholder="Grade"
                   class="form-control mb-3"
+                  min="1"
                   required
                 />
                 <input
                   type="submit"
                   class="btn btn-primary mb-3"
-                  value="Approve"
+                  value={isGraded ? "Regrade" : "Approve"}
                 />
               </form>
 
-              <button class="btn btn-danger mb-3" on:click={() => grade(0)}
-                >Decline</button
-              >
+              {#if !isGraded}
+              <button 
+                class="btn btn-danger mb-3"
+                on:click={() => grade(0)}
+              >Decline</button>
+              {/if}
             </div>
 
             <div class="col-12 col-md-6">
@@ -127,6 +136,8 @@
               {:else if /.*.(mp4|webm|ogg)$/i.test(submission?.fileLink)}
                 <!-- svelte-ignore a11y-media-has-caption -->
                 <video src={submission?.fileLink} controls />
+              {:else}
+                <p>File type not supported. Click <a href={submission?.fileLink}>here</a> to download it.</p>
               {/if}
             </div>
           {/if}
