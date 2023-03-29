@@ -15,7 +15,10 @@
         Authorization: localStorage.getItem("rially::token"),
       },
     })
-      .then((res) => res.json())
+      .then( async (res) => {
+        if (res.ok) return res.json();
+        throw Error((await res.json()).message);
+      })
       .then((data) => {
         team = data;
       })
@@ -43,7 +46,9 @@
         }
         res.json().then((data) => (error = data.message));
       })
-      .catch((e) => (error = e))
+      .catch((e) => {
+        error = e;
+      })
       .finally(() => (loadingTeamDelete = false));
   }
 
@@ -67,6 +72,38 @@
       .catch((e) => (error = e))
       .finally(() => {
         delete loadingMemberDeletes[id];
+        error = "";
+      });
+  }
+
+  let loadingChangeName = false;
+  async function handleChangeName(event) {
+    const data = new FormData(event.target);
+    const newName = data.get("newName");
+    if (!newName) return;
+
+    loadingChangeName = true;
+    fetch(`${settings.api_url}/teams`, {
+      headers: {
+        Authorization: localStorage.getItem("rially::token"),
+        "Content-Type": "application/json",
+      },
+      method: "PATCH",
+      body: JSON.stringify({
+        newName,
+        teamId: team.id
+      }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          team.name = newName;
+          return;
+        };
+        res.json().then((data) => (error = data.message));
+      })
+      .catch((e) => (error = e))
+      .finally(() => {
+        loadingChangeName = false;
         error = "";
       });
   }
@@ -142,12 +179,12 @@
 
             <div class="col-12 col-md-4">
               <h2>Actions</h2>
-              <form class="mb-3">
+              <form class="mb-3" on:submit|preventDefault={handleChangeName}>
                 <label for="newName" class="form-label">Change team name</label>
                 <input type="text" name="newName" class="form-control mb-3" />
                 <input
                   type="submit"
-                  value="Change team name"
+                  value={loadingChangeName ? "Loading..." : "Change team name"}
                   class="btn btn-large btn-primary"
                 />
               </form>

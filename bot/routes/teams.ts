@@ -3,6 +3,7 @@ import verifyToken from "../utils/verifyToken";
 import { client } from "../index";
 import { ChannelType } from "discord.js";
 import getFromCacheOrFetch from "../utils/getFromCacheOrFetch";
+import type discordjs from "discord.js";
 
 const router = Router();
 
@@ -97,6 +98,41 @@ router.post("/", verifyToken, async (req, res) => {
     roleId: role.id,
     channelId: channel.id,
   });
+});
+
+// Change team name
+router.patch("/", verifyToken, async (req, res) => {
+  const {
+    roleId,
+    channelId,
+    newName,
+  }: { roleId: string; channelId: string; newName: string } = req.body;
+  if (!roleId || !channelId || !newName)
+    return res
+      .status(400)
+      .json({ message: "Role ID, Channel ID and New name required" });
+
+  const guild = await getFromCacheOrFetch(
+    client.guilds,
+    process.env.DISCORD_SERVER_ID!
+  );
+  if (!guild) return res.status(500).json({ message: "Discord bot broke" });
+
+  const role = await getFromCacheOrFetch(guild.roles, roleId);
+  if (!role) return res.status(404).json({ message: "Role ID unkown" });
+
+  const channel = await getFromCacheOrFetch(guild.channels, channelId);
+  if (!channel)
+    return res.sendStatus(404).json({ message: "Channel ID unkown" });
+
+  const changeRoleName = role.setName(newName);
+  const changeChannelName = (channel as discordjs.TextChannel).setName(newName);
+  Promise.all([changeRoleName, changeChannelName])
+    .then(() => res.sendStatus(200))
+    .catch((error) => {
+      console.error(error);
+      return res.sendStatus(500);
+    });
 });
 
 export default router;

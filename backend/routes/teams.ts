@@ -115,7 +115,7 @@ router.patch(
   async (req: Request, res) => {
     const { newName, teamId } = req.body;
     if (!newName || !teamId)
-      return sendError(res, "New name and Team id are required", 400);
+      return sendError(res, "New name and Team ID are required", 400);
     if (!req.data?.team?.id) return sendError(res);
     prisma.team
       .update({
@@ -126,8 +126,32 @@ router.patch(
           name: newName,
         },
       })
-      // TODO: Change team name in discord
-      .then(() => res.sendStatus(200))
+      .then(async (team) => {
+        let hasSent = false;
+        try {
+          await axios.patch(
+            `${process.env.BOT_API_URL}/teams`,
+            {
+              roleId: team.roleId,
+              channelId: team.channelId,
+              newName,
+            },
+            {
+              headers: {
+                Authorization: process.env.BOT_API_KEY!,
+              },
+            }
+          );
+        } catch (error) {
+          console.error(error);
+          hasSent = true;
+          res.status(500).json({
+            message:
+              "Could not update team name in discord. Please update the channel name and role name manually. Names don't effect the functionality!",
+          });
+        }
+        if (!hasSent) return res.sendStatus(200);
+      })
       .catch((error) => {
         console.error(error);
         return sendError(res);
