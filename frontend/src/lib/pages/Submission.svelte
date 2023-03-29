@@ -85,11 +85,7 @@
             <div class="col-md-3 col-6">
               <p>Location: {submission?.location}</p>
               <p>Team id: {submission?.teamId}</p>
-              {#if type !== "puzzle"}
-                <p>Grade: {submission?.grading ?? "not graded yet"}</p>
-              {:else}
-                <p>Status: {submission?.status}</p>
-              {/if}
+              <p>Grade: {submission?.grading ?? "not graded yet"}</p>
             </div>
 
             <div class="actions col-6 col-md-3">
@@ -100,26 +96,20 @@
                 name="isFunny"
                 bind:checked={isFunny}
               />
-              {#if type !== "puzzle"}
-                <form on:submit|preventDefault={handleApprove} class="">
-                  <input
-                    type="number"
-                    name="score"
-                    placeholder="Grade"
-                    class="form-control mb-3"
-                    required
-                  />
-                  <input
-                    type="submit"
-                    class="btn btn-primary mb-3"
-                    value="Approve"
-                  />
-                </form>
-              {:else}
-                <button class="btn btn-success mb-3" on:click={() => grade(1)}
-                  >Approve</button
-                >
-              {/if}
+              <form on:submit|preventDefault={handleApprove} class="">
+                <input
+                  type="number"
+                  name="score"
+                  placeholder="Grade"
+                  class="form-control mb-3"
+                  required
+                />
+                <input
+                  type="submit"
+                  class="btn btn-primary mb-3"
+                  value="Approve"
+                />
+              </form>
 
               <button class="btn btn-danger mb-3" on:click={() => grade(0)}
                 >Decline</button

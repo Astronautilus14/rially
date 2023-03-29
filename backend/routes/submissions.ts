@@ -32,7 +32,7 @@ router.post(
     });
     const location = puzzleSubmissions.length + 1;
     for (const submission of puzzleSubmissions) {
-      if (submission.status === "NEED_GRADING")
+      if (submission.grading === null)
         return sendError(
           res,
           `Your team already submitted a puzzle for location ${
@@ -79,7 +79,7 @@ router.post(
       where: {
         // @ts-expect-error
         teamId: req.data.team.id,
-        status: "APPROVED",
+        NOT: { grading: null },
       },
     });
     const location = approvedSubmissions.length;
@@ -194,7 +194,7 @@ function checkTeam(req: Request, res: Response, next: NextFunction) {
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const puzzles = prisma.puzzlesubmission.findMany({
     where: {
-      status: "NEED_GRADING",
+      grading: null,
     },
   });
   const challanges = prisma.challangesubmission.findMany({

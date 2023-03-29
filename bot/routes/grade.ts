@@ -6,7 +6,7 @@ import type discordjs from "discord.js";
 
 const router = Router();
 
-router.post("/grade", verifyToken, async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   const {
     roleId,
     channelId,
@@ -53,7 +53,9 @@ router.post("/grade", verifyToken, async (req, res) => {
       `Your puzzle submission for location ${location} has been ${
         grading < 1
           ? "rejected"
-          : "approved! You can now see the location challanges and next puzzles in the puzzles categoty"
+          : `graded with ${grading} point${
+              grading > 1 ? "s" : ""
+            }! You can now see the location challanges and next puzzles in the puzzles categoty.`
       }`
     );
   } else {
@@ -79,6 +81,7 @@ router.post("/grade", verifyToken, async (req, res) => {
     return res.status(400).json({
       message: "Location required",
     });
+  // TODO: Dit nice maken voor 4 locaties
   if (location !== 1 && location !== 2 && location !== 3)
     return res.status(400).json({
       message: "Location must be 1, 2 or 3",

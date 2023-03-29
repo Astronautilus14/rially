@@ -62,3 +62,8 @@ model crazy88submission {
   number   Int
   isFunny  Boolean @default(false)
 }
+
+model variables {
+  key   String  @id
+  value String?
+}
