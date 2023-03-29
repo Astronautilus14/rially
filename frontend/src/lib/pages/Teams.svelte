@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import settings from "../settings.json";
-  import { Link } from "svelte-routing";
+  import { Link, navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
 
   let error = "";
@@ -14,7 +14,11 @@
         Authorization: localStorage.getItem("rially::token"),
       },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.ok) return res.json();
+        if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
+        res.json().then((data) => (error = data.message));
+      })
       .then((data) => {
         teams = data;
       })

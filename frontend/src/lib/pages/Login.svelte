@@ -1,6 +1,6 @@
 <script lang="ts">
   import settings from "../settings.json";
-  import { navigate } from "svelte-routing";
+  import { Link, navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
 
   function handelSubmit(event) {
@@ -37,7 +37,7 @@
 <main class="container">
   <div class="row justify-content-md-center">
     <div class="col-12 col-sm-10">
-      <GlassCard title="Login">
+      <GlassCard title="Login for committee">
         <form on:submit|preventDefault={handelSubmit}>
           <div class="mb-3">
             <label class="form-label" for="username">Username</label>
@@ -67,6 +67,7 @@
             <button class="btn btn-primary btn-lg" type="submit">Log in</button>
           </div>
         </form>
+        <Link to="/register/committee">No account? Register first!</Link>
       </GlassCard>
     </div>
   </div>

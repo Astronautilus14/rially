@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { Link } from "svelte-routing";
+  import { Link, navigate } from "svelte-routing";
   import settings from "../settings.json"
 
   let data;
@@ -15,6 +15,7 @@
     })
     .then(async (res) => {
       if (res.ok) return data = (await res.json()).submissions;
+      if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
       error = (await res.json()).message
     })
     .catch(e => error = e)

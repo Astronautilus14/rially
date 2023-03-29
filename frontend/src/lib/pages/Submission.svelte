@@ -22,6 +22,7 @@
     })
       .then(async (res) => {
         if (res.ok) return res.json();
+        if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
         error = (await res.json()).message;
       })
       .then((data) => {

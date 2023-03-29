@@ -3,6 +3,7 @@
   import GlassCard from "../../components/GlassCard.svelte";
   import QuoteCard from "../../components/QuoteCard.svelte";
   import settings from "../settings.json";
+  import { Link } from "svelte-routing";
 
   let loading = false;
   let error = "";
@@ -44,7 +45,7 @@
 <main class="container">
   <div class="row justify-content-md-center">
     <div class="col-12 col-sm-10">
-      <GlassCard title="Register committee">
+      <GlassCard title="Register for committee">
         <form on:submit|preventDefault={registerSubmit}>
           <div class="mb-3">
             <label class="form-label" for="username">Username</label>
@@ -88,6 +89,7 @@
         {#if error}
           <p class="error">{error}</p>
         {/if}
+        <Link to="/login">Already registered? Login here!</Link>
       </GlassCard>
     </div>
   </div>

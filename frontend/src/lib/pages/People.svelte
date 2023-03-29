@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
 
@@ -16,6 +17,7 @@
     })
       .then(async (res) => {
         if (res.ok) return res.json();
+        if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
         throw new Error((await res.json()).message);
       })
       .then((data) => {

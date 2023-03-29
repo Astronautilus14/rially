@@ -7,6 +7,7 @@
 
   let mounted = false;
   let pending: { id: number; active: boolean; type: string }[] = [];
+  let error = "";
 
   socket.on("submission", (id: number, type: string) => {
     let temp: { id: number; active: boolean; type: string }[] = [];
@@ -70,7 +71,11 @@
         Authorization: localStorage.getItem("rially::token"),
       },
     })
-      .then((response) => response.json())
+      .then( async (response) => {
+        if (response.ok) return response.json();
+        if (response.status === 403 || response.status === 401) return navigate("/login", {replace: true});
+        throw new Error((await response.json()).message);
+      })
       .then((data) => {
         pending = [...pending, ...data.pending];
         mounted = true;
@@ -88,6 +93,9 @@
   <div class="row justify-content-md-center">
     <div class="col-12 col-sm-10">
       <GlassCard title="Grading">
+        {#if error}
+        <p class="error">{error}</p>
+        {/if}
         {#if pending.length === 0}
         <p><i>There are no new submissions...</i></p>
         {/if}

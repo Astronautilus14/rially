@@ -99,6 +99,7 @@
           team.name = newName;
           return;
         };
+        if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
         res.json().then((data) => (error = data.message));
       })
       .catch((e) => (error = e))
