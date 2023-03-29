@@ -3,35 +3,54 @@
   import { onMount } from "svelte";
   import { navigate } from "svelte-routing";
   import socket from "../socket";
-  import Submission from "./Submission.svelte";
   import GlassCard from "../../components/GlassCard.svelte";
 
   let mounted = false;
-
   let pending: { id: number; active: boolean; type: string }[] = [];
+
   socket.on("submission", (id: number, type: string) => {
-    pending = [...pending, { id, active: false, type }];
+    let temp: { id: number; active: boolean; type: string }[] = [];
+    let pushed = false;
+    const newSubmission = {id, type, active: false};
+
+    // My fanstic algorithm to put the new submission in the correct place.
+    // The order is puzzle, challange, crazy88 with in each categorie the oldest on top.
+    if (type === "crazy88") return pending = [...pending, newSubmission];
+
+    for (const submission of pending) {
+      if (!pushed) {
+        if (type === "puzzle" && submission.type !== "puzzle") {
+          pushed = true;
+          temp.push(newSubmission);
+        }
+        if (type === "challange" && submission.type === "crazy88") {
+          pushed = true;
+          temp.push(newSubmission);
+        }
+      }
+      temp.push(submission);
+    }
+    if (!pushed) temp.push({id, type, active: false});
+    pending = temp;
   });
 
   let toSetActive: { id: number; type: string }[] = [];
   socket.on("grading-started", (id: number, type: string) => {
     if (mounted) return setActive(id, type);
     toSetActive.push({ id, type });
-    console.log(toSetActive);
   });
 
-  socket.on("grading-finished", (id, type) => {
+  socket.on("grading-finished", (id: number, type: string) => {
     pending = pending.filter(
       (submission) => submission.id !== id && submission.type !== type
     );
   });
 
-  socket.on("grading-cancled", (id, type) => {
+  socket.on("grading-cancled", (id: number, type: string) => {
     setActive(id, type, false);
-    console.log(id, type);
   });
 
-  function setActive(id, type, value = true) {
+  function setActive(id: number, type: string, value = true) {
     pending = pending.map((submission) => {
       if (submission.id === id && submission.type === type)
         submission.active = value;
@@ -53,7 +72,7 @@
     })
       .then((response) => response.json())
       .then((data) => {
-        pending = [...pending, ...data.pending].reverse();
+        pending = [...pending, ...data.pending];
         mounted = true;
         for (const submission of toSetActive) {
           setActive(submission.id, submission.type);
@@ -69,6 +88,9 @@
   <div class="row justify-content-md-center">
     <div class="col-12 col-sm-10">
       <GlassCard title="Grading">
+        {#if pending.length === 0}
+        <p><i>There are no new submissions...</i></p>
+        {/if}
         <ul class="list-group mb-3">
           {#each pending as submission}
             <li class="list-group-item">

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json"
 
   let error = "";
@@ -65,25 +66,29 @@
   }
 </script>
 
-<main>
-  <h1>People who need a team</h1>
-  <hr>
-  {#if error}
-    <p class="error">{error}</p>
-  {/if}
-  {#each users as user}
-    <div class="user">
-      <h2>{user.name}</h2>
-      <p>{user.username}</p>
-      <form on:submit|preventDefault={handleAddUserToTeam}>
-        <select name="teamId">
-          {#each teams as team}
-            <option value={team.id}>{team.name}</option>
-          {/each}
-        </select>
-        <input type="hidden" name="userId" value={user.id}>
-        <input type="submit" value={isLoading[user] ? "Loading..." : "Submit"}>
-      </form>
+<main class="container">
+  <div class="row justify-content-md-center">
+    <div class="col-12 col-sm-10">
+      <GlassCard title="People who need a team">
+      {#if error}
+        <p class="error">{error}</p>
+      {/if}
+      {#each users as user}
+        <div class="user">
+          <h2>{user.name}</h2>
+          <p>{user.username}</p>
+          <form on:submit|preventDefault={handleAddUserToTeam}>
+            <select name="teamId">
+              {#each teams as team}
+                <option value={team.id}>{team.name}</option>
+              {/each}
+            </select>
+            <input type="hidden" name="userId" value={user.id}>
+            <input type="submit" value={isLoading[user] ? "Loading..." : "Submit"}>
+          </form>
+        </div>
+      {/each}
+      </GlassCard>
     </div>
-  {/each}
+  </div>
 </main>

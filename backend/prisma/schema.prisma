@@ -32,18 +32,12 @@ model team {
   crazy88submission   crazy88submission[]
 }
 
-enum status {
-  NEED_GRADING
-  APPROVED
-  REJECTED
-}
-
 model puzzlesubmission {
   id       Int     @id @default(autoincrement())
   team     team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId   Int
   fileLink String  @unique
-  status   status  @default(NEED_GRADING)
+  grading  Int?
   location Int
   isFunny  Boolean @default(false)
 }
