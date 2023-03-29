@@ -6,10 +6,12 @@ import axios from "axios";
 
 const router = express.Router();
 
+// Create a new team
 router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { teamName } = req.body;
   if (!teamName) return sendError(res, "Team name is required", 400);
 
+  // Create team in db
   let team;
   try {
     team = await prisma.team.create({
@@ -24,6 +26,7 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
   if (!team) return sendError(res);
 
+  // Create team in discord
   let discordRes;
   try {
     discordRes = await axios.post(
@@ -39,9 +42,15 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    return sendError(res);
+    sendError(res);
+    // If the team in not created in discord, delete it from the db
+    await prisma.team.delete({
+      where: { id: team.id },
+    });
+    return;
   }
 
+  // Set the discord role id and channel id in the db
   await prisma.team.update({
     where: {
       id: team.id,
@@ -54,10 +63,12 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   res.sendStatus(200);
 });
 
+// Delete a team
 router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { teamId }: { teamId: number } = req.body;
   if (!teamId) return sendError(res, "Team ID required", 400);
 
+  // Create team in db
   let team;
   try {
     team = await prisma.team.delete({
@@ -73,6 +84,7 @@ router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   if (!team) return sendError(res, "Team ID not found", 400);
   if (!team.channelId || !team.roleId) return res.sendStatus(200);
 
+  // Delete team in discord
   try {
     await axios.delete(`${process.env.BOT_API_URL}/teams`, {
       data: {
@@ -85,11 +97,16 @@ router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return sendError(res);
+    return sendError(
+      res,
+      "Altough discord seems to be connected, the team could not be deleted in discord",
+      500
+    );
   }
   return res.sendStatus(200);
 });
 
+// Change team name
 router.patch(
   "/",
   tokenCheck,
@@ -109,6 +126,7 @@ router.patch(
           name: newName,
         },
       })
+      // TODO: Change team name in discord
       .then(() => res.sendStatus(200))
       .catch((error) => {
         console.error(error);
@@ -117,11 +135,13 @@ router.patch(
   }
 );
 
+// Add member to team
 router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  const { userId, teamId } = req.body;
+  const { userId, teamId }: { userId: number; teamId: number } = req.body;
   if (!userId || !teamId)
     return sendError(res, "User ID and Team ID are required", 400);
 
+  // Add member in db
   let user;
   try {
     user = await prisma.user.update({
@@ -140,9 +160,10 @@ router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
   if (!user) return sendError(res, "User ID is now known", 400);
 
+  // Add user to team in discord
   try {
     await axios.post(
-      `${process.env.BOT_API_URL}/teams/member`,
+      `${process.env.BOT_API_URL}/member`,
       {
         roleId: user.team?.roleId,
         userId: user.discordId,
@@ -155,21 +176,29 @@ router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    return sendError(res);
+    sendError(res, "Could not delete user from team in discord.", 500);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { teamId: null },
+    });
+    return;
   }
 
   return res.sendStatus(200);
 });
 
+// Delete member from team (unused: or add user to new team)
 router.delete(
   "/member",
   tokenCheck,
   teamCheck,
   isCommittee,
   async (req, res) => {
-    const { userId, newTeamId } = req.body;
+    const { userId, newTeamId }: { userId: number; newTeamId?: number } =
+      req.body;
     if (!userId) return sendError(res, "User id is required", 400);
 
+    // Update db
     let user;
     try {
       user = await prisma.user.update({
@@ -184,11 +213,12 @@ router.delete(
       console.error(error);
       return sendError(res);
     }
-    if (!user) return sendError(res, "User not found", 400);
+    if (!user) return sendError(res, "User not found", 404);
     if (!user.discordId) return res.sendStatus(200);
 
+    // Update discord
     try {
-      await axios.delete(`${process.env.BOT_API_URL}/teams/member`, {
+      await axios.delete(`${process.env.BOT_API_URL}/member`, {
         data: {
           discordId: user.discordId,
         },
@@ -198,15 +228,22 @@ router.delete(
       });
     } catch (error) {
       console.error(error);
-      return sendError(res);
+      sendError(
+        res,
+        "User not deleted from old team in discord. User's rights are updated, please manually update the user's roles in discord.",
+        500
+      );
+      return;
     }
   }
 );
 
+// Get all teams
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) =>
   res.json(await prisma.team.findMany())
 );
 
+// Get all team + members for public
 router.get("/:id/public", async (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
@@ -221,6 +258,7 @@ router.get("/:id/public", async (req, res) => {
   return res.json(data);
 });
 
+// Get all users who are not yet in a team + list of teams
 router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   try {
     const users = prisma.user.findMany({
@@ -249,6 +287,7 @@ router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
 });
 
+// Get all info about a team and its users
 router.get("/:id", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
@@ -260,6 +299,7 @@ router.get("/:id", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       },
     },
   });
+  if (!data) return res.status(404).json({ message: "ID is not known" });
   return res.json(data);
 });
 
