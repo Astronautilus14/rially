@@ -16,6 +16,7 @@
   // Import our custom CSS
   import "./scss/styles.scss";
   import * as bootstrap from "bootstrap";
+  import RegisterCommittee from "./lib/pages/RegisterCommittee.svelte";
 
   export let url = "";
   const location = window.location.href.split("/");
@@ -42,8 +43,9 @@
         </div>
       </nav>
     </div>
-  {/if}
-  <div data-bs-theme="dark">
+    {/if}
+    <div data-bs-theme="dark">
+    <Route path="register/committee" component={RegisterCommittee} />
     <Route path="register" component={Register} />
     <Route path="grading" component={Grading} />
     <Route path="login" component={Login} />

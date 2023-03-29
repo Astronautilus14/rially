@@ -278,19 +278,16 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       table = prisma.challangesubmission;
       break;
     case "puzzle":
-      status = grading > 0 ? "APPROVED" : "REJECTED";
       table = prisma.puzzlesubmission;
       break;
     default:
       return sendError(res, "Submission type is unkown", 400);
   }
 
-  const data = status ? { status, isFunny } : { grading, isFunny };
-
   // @ts-expect-error
   const submission = await table.update({
     where: { id },
-    data,
+    data: { grading, isFunny },
     include: { team: true },
   });
   console.log(submission);
