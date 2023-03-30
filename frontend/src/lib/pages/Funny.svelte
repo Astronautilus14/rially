@@ -5,11 +5,11 @@
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
 
-  let data;
+  let data = [];
   let error = "";
 
   onMount(() => {
-    // isLoading.set(true);
+    isLoading.set(true);
     fetch(`${settings.api_url}/submissions/funny`, {
       headers: {
         Authorization: localStorage.getItem("rially::token"),
