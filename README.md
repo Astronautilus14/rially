@@ -2,7 +2,7 @@
 
 You have to start 3 pocesses.
 
-## Backend
+## Bot
 
 ```
 cd backend
@@ -15,7 +15,7 @@ Ask Naut for all the things that go in your `.env`
 npm run dev
 ```
 
-## Bot
+## Backend
 
 ```
 cd bot
@@ -39,6 +39,14 @@ Slash commands are not like you might know discord bot commands. The layout of t
 ```
 npm run register
 ```
+
+### Old
+
+**Create admin user**
+To give yourself and your fellow committee members admin right, you can register yourself (once you openend the frontend) at /registerCommittee. Afterwards you have to make a team in the team table and set the isCommittee to 1 and set your teamId in the user table to the team you just created.
+
+**Set variables**
+In the variables table you have to make a row with the key field set to publicLeaderboard and the value field to 'true' or 'false'. You can also do this by loggin in at the frontend (at /login) and toggeling the switch at /leaderboard.
 
 ## Frontend
 
