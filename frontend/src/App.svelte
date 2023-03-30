@@ -25,24 +25,22 @@
 </script>
 
 <Router {url}>
-  {#if path !== "login" && path !== "register" && isLoggedIn}
-    <div>
-      <nav class="navbar navbar-expand-lg bg-primary">
-        <div class="container-fluid">
-          <Link to="/" class="navbar-brand mb-0 h1">RIAlly</Link>
-          <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-            <div class="navbar-nav">
-              <Link to="/" class="nav-link">Home</Link>
-              <Link to="/teams" class="nav-link">Teams</Link>
-              <Link to="/people" class="nav-link">Lonely people</Link>
-              <Link to="/grading" class="nav-link">Grading</Link>
-              <Link to="/funny" class="nav-link">Funny</Link>
-              <Link to="/leaderboard" class="nav-link">Leaderboard</Link>
-            </div>
+  {#if path !== "login" && path !== "register" && $isLoggedIn}
+    <nav class="navbar navbar-expand-lg bg-primary">
+      <div class="container-fluid">
+        <Link to="/" class="navbar-brand mb-0 h1">RIAlly</Link>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav">
+            <Link to="/" class="nav-link">Home</Link>
+            <Link to="/teams" class="nav-link">Teams</Link>
+            <Link to="/people" class="nav-link">Lonely people</Link>
+            <Link to="/grading" class="nav-link">Grading</Link>
+            <Link to="/funny" class="nav-link">Funny</Link>
+            <Link to="/leaderboard" class="nav-link">Leaderboard</Link>
           </div>
         </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
   {/if}
   <div data-bs-theme="dark">
     <Route path="register/committee" component={RegisterCommittee} />
