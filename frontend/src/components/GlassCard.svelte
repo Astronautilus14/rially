@@ -1,4 +1,6 @@
 <script>
+  import { Jumper } from "svelte-loading-spinners";
+  import { isLoading } from "../stores/loadingStore";
   export let title = "";
   export let header = "";
   export let keepBootstrap = false;
@@ -11,14 +13,18 @@
         {header}
       </div>
     {/if}
-    <!-- <div class="card-header">
-    </div> -->
     <div class="card-body">
       {#if title}
         <h3 class="card-title">{title}</h3>
         <hr />
       {/if}
-      <slot />
+
+      <div class={$isLoading ? "doShow" : "doHide"}>
+        <Jumper color="#730acd" />
+      </div>
+      <div class={$isLoading ? "doHide" : "doShow"}>
+        <slot />
+      </div>
     </div>
   </div>
 </div>
@@ -35,5 +41,23 @@
     border: 1px solid #470ca0a8;
 
     color: #fff;
+  }
+
+  @keyframes showNav {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .doShow {
+    display: block;
+    animation: showNav 0.3s ease-in-out;
+  }
+
+  .doHide {
+    display: none;
   }
 </style>

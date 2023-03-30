@@ -132,6 +132,40 @@ router.post("/register", async (req, res) => {
     });
 });
 
+router.post("/verifytoken", async (req, res) => {
+  const { token }: { token: string } = req.body;
+  if (!token) return sendError(res, "No token provided", 400);
+  jwt.verify(token, secretKey, (err, payload) => {
+    if (err) return sendError(res, "Invalid token", 401);
+    if (!payload) {
+      return sendError(res, "Invalid token", 401);
+    }
+    // @ts-expect-error
+    const uid = payload.uid;
+    if (!uid) return sendError(res, "Invalid token", 401);
+    prisma.user
+      .findUnique({
+        where: {
+          id: uid,
+        },
+      })
+      .then((data) => {
+        if (!data) return sendError(res, "Invalid token", 401);
+        return res.send(
+          JSON.stringify({
+            username: data.username,
+            name: data.name,
+            discordId: data.discordId,
+          })
+        );
+      })
+      .catch((error) => {
+        console.error(error);
+        return sendError(res);
+      });
+  });
+});
+
 router.post("/login", async (req, res) => {
   const { username, password }: { username: string; password: string } =
     req.body;

@@ -12,11 +12,11 @@
   socket.on("submission", (id: number, type: string) => {
     let temp: { id: number; active: boolean; type: string }[] = [];
     let pushed = false;
-    const newSubmission = {id, type, active: false};
+    const newSubmission = { id, type, active: false };
 
     // My fanstic algorithm to put the new submission in the correct place.
     // The order is puzzle, challange, crazy88 with in each categorie the oldest on top.
-    if (type === "crazy88") return pending = [...pending, newSubmission];
+    if (type === "crazy88") return (pending = [...pending, newSubmission]);
 
     for (const submission of pending) {
       if (!pushed) {
@@ -31,7 +31,7 @@
       }
       temp.push(submission);
     }
-    if (!pushed) temp.push({id, type, active: false});
+    if (!pushed) temp.push({ id, type, active: false });
     pending = temp;
   });
 
@@ -71,9 +71,10 @@
         Authorization: localStorage.getItem("rially::token"),
       },
     })
-      .then( async (response) => {
+      .then(async (response) => {
         if (response.ok) return response.json();
-        if (response.status === 403 || response.status === 401) return navigate("/login", {replace: true});
+        if (response.status === 403 || response.status === 401)
+          return navigate("/login", { replace: true });
         throw new Error((await response.json()).message);
       })
       .then((data) => {
@@ -94,10 +95,10 @@
     <div class="col-12 col-sm-10">
       <GlassCard title="Grading">
         {#if error}
-        <p class="error">{error}</p>
+          <p class="error">{error}</p>
         {/if}
         {#if pending.length === 0}
-        <p><i>There are no new submissions...</i></p>
+          <p><i>There are no new submissions...</i></p>
         {/if}
         <ul class="list-group mb-3">
           {#each pending as submission}

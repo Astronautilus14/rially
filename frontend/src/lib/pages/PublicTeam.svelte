@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import settings from "../settings.json"
+  import settings from "../settings.json";
 
   export let id: string;
   let error = "";
@@ -9,18 +9,18 @@
   let team;
   onMount(() => {
     fetch(`${settings.api_url}/teams/${id}/public`)
-    .then(res => res.json())
-    .then((data) => {
-      team = data;
-    })
-    .catch((e) => error = e)
-    .finally(() => loading = false)
+      .then((res) => res.json())
+      .then((data) => {
+        team = data;
+      })
+      .catch((e) => (error = e))
+      .finally(() => (loading = false));
   });
 </script>
 
 <main>
   <h1>{loading ? "Loading..." : team?.name}</h1>
-  <hr>
+  <hr />
   {#if loading}
     <p>Loading...</p>
   {:else}
@@ -32,9 +32,9 @@
       <p>This team has no members yet</p>
     {/if}
     {#each team.members as member}
-    <div class="user">
-      <p>Username: {member.username}</p>
-    </div>
+      <div class="user">
+        <p>Username: {member.username}</p>
+      </div>
     {/each}
   {/if}
 </main>
@@ -45,7 +45,7 @@
     padding: 0;
     box-sizing: border-box;
   }
-  
+
   main {
     padding: 2rem;
 
@@ -53,7 +53,8 @@
       margin: 1rem;
     }
 
-    .user, .data {
+    .user,
+    .data {
       padding: 0.5rem;
       margin: 0.5rem;
       background-color: lightblue;

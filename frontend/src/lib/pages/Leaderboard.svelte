@@ -1,19 +1,18 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { Link } from "svelte-routing";
+  import { isLoggedIn } from "../../stores/accountStore";
+  import { isLoading } from "../../stores/loadingStore";
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
 
   let data;
   let error = "";
-  let loading = true;
   let isPublic = true;
 
-  // TODO: Dit nice maken met danny zijn winkel
-  let isLoggedIn = localStorage.getItem("rially::token") !== null;
-
   onMount(() => {
-    fetch(`${settings.api_url}/leaderboard${isLoggedIn ? "" : "/public"}`, {
+    isLoading.set(true);
+    fetch(`${settings.api_url}/leaderboard${$isLoggedIn ? "" : "/public"}`, {
       headers: {
         Authorization: localStorage.getItem("rially::token"),
       },
@@ -29,11 +28,12 @@
         isPublic = body.isPublic ?? true;
       })
       .catch((e) => (error = e))
-      .finally(() => (loading = false));
+      .finally(() => isLoading.set(false));
   });
 
   function handlePublicSwitch() {
     isPublic = !isPublic;
+    isLoading.set(true);
     fetch(`${settings.api_url}/leaderboard`, {
       method: "PATCH",
       headers: {
@@ -51,7 +51,8 @@
       .catch((e) => {
         error = e;
         isPublic = !isPublic;
-      });
+      })
+      .then(() => isLoading.set(false));
   }
 </script>
 
@@ -59,48 +60,44 @@
   <div class="row justify-content-md-center">
     <div class="col-12 col-sm-10">
       <GlassCard title="Leaderboard">
-        {#if loading}
-          <p>Loading...</p>
-        {:else}
-          {#if error}
-            <p class="error">{error}</p>
-          {/if}
-          {#if isLoggedIn}
-            <div class="mb-5">
-              <h3>Public leaderboard</h3>
-              <label class="switch">
-                <input
-                  type="checkbox"
-                  bind:checked={isPublic}
-                  on:click={handlePublicSwitch}
-                />
-                <span class="slider round" />
-              </label>
-            </div>
-          {/if}
-          <table class="table table-bordered border-white">
-            <thead>
-              <tr>
-                <th>Place</th>
-                <th>Team</th>
-                <th>Score</th>
-              </tr>
-            </thead>
-            {#if data}
-              <tbody>
-                {#each data as team, i}
-                  <tr>
-                    <td>{i + 1}</td>
-                    <td>
-                      <Link to={`/teams/${team.id}/public`}>{team.name}</Link>
-                    </td>
-                    <td>{team.score}</td>
-                  </tr>
-                {/each}
-              </tbody>
-            {/if}
-          </table>
+        {#if error}
+          <p class="error">{error}</p>
         {/if}
+        {#if $isLoggedIn}
+          <div class="mb-5">
+            <h3>Public leaderboard</h3>
+            <label class="switch">
+              <input
+                type="checkbox"
+                bind:checked={isPublic}
+                on:click={handlePublicSwitch}
+              />
+              <span class="slider round" />
+            </label>
+          </div>
+        {/if}
+        <table class="table table-bordered border-white">
+          <thead>
+            <tr>
+              <th>Place</th>
+              <th>Team</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          {#if data}
+            <tbody>
+              {#each data as team, i}
+                <tr>
+                  <td>{i + 1}</td>
+                  <td>
+                    <Link to={`/teams/${team.id}/public`}>{team.name}</Link>
+                  </td>
+                  <td>{team.score}</td>
+                </tr>
+              {/each}
+            </tbody>
+          {/if}
+        </table>
       </GlassCard>
     </div>
   </div>
