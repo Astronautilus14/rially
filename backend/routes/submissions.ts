@@ -309,7 +309,6 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     data: { grading, isFunny },
     include: { team: true },
   });
-  console.log(submission);
 
   try {
     await axios.post(

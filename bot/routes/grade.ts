@@ -2,7 +2,8 @@ import { Router } from "express";
 import verifyToken from "../utils/verifyToken";
 import { client } from "../index";
 import getFromCacheOrFetch from "../utils/getFromCacheOrFetch";
-import type discordjs from "discord.js";
+import discordjs from "discord.js";
+import { Collection, PermissionOverwrites } from "discord.js";
 
 const router = Router();
 
@@ -33,6 +34,8 @@ router.post("/", verifyToken, async (req, res) => {
       message: "Role ID, Channel ID, Type and Grading are required",
     });
 
+  console.log(req.body);
+
   const guild = await getFromCacheOrFetch(
     client.guilds,
     process.env.DISCORD_SERVER_ID!
@@ -42,7 +45,7 @@ router.post("/", verifyToken, async (req, res) => {
       message: "Discord bot broke",
     });
 
-  let channel = await getFromCacheOrFetch(guild.channels, channelId);
+  const channel = await getFromCacheOrFetch(guild.channels, channelId);
   if (!channel?.isTextBased())
     return res.status(400).json({
       message: "Channel not found",
@@ -67,16 +70,17 @@ router.post("/", verifyToken, async (req, res) => {
 
   if (type !== "puzzle") return res.sendStatus(200);
 
+  if (!location)
+    return res.status(400).json({
+      message: "Location required",
+    });
+
   const role = await getFromCacheOrFetch(guild.roles, roleId);
   if (!role)
     return res.status(404).json({
       message: "Role not found",
     });
 
-  if (!location)
-    return res.status(400).json({
-      message: "Location required",
-    });
   // TODO: Dit nice maken voor 4 locaties
   if (location !== 1 && location !== 2 && location !== 3)
     return res.status(400).json({
@@ -85,12 +89,19 @@ router.post("/", verifyToken, async (req, res) => {
   const puzzleChannelId = process.env[`LOCATION_${location}_ID`];
   if (!puzzleChannelId) return res.sendStatus(500);
 
-  const puzzleChannel = await getFromCacheOrFetch(guild.channels, channelId);
+  let puzzleChannel = await getFromCacheOrFetch(
+    guild.channels,
+    puzzleChannelId
+  );
   if (!puzzleChannel?.isTextBased()) return res.sendStatus(500);
 
-  (puzzleChannel as discordjs.TextChannel).permissionOverwrites.edit(role, {
-    ViewChannel: true,
-  });
+  await (puzzleChannel as discordjs.TextChannel).permissionOverwrites
+    .edit(role, { ViewChannel: true })
+    .catch((error) => {
+      console.error(error);
+      return res.sendStatus(500);
+    });
+
   return res.sendStatus(200);
 });
 
