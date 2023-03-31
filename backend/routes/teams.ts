@@ -159,7 +159,7 @@ router.patch(
   }
 );
 
-// Add member to team
+// Add user to team
 router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { userId, teamId }: { userId: number; teamId: number } = req.body;
   if (!userId || !teamId)
@@ -259,12 +259,37 @@ router.delete(
       );
       return;
     }
+
+    return res.sendStatus(200);
   }
 );
 
 // Get all teams
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) =>
   res.json(await prisma.team.findMany())
+);
+
+// Get all users
+router.get("/users", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  res.json(
+    await prisma.user.findMany({ select: { id: true, username: true } })
+  );
+});
+
+// Get committee team id
+router.get(
+  "/committee",
+  tokenCheck,
+  teamCheck,
+  isCommittee,
+  async (req, res) => {
+    res.json(
+      await prisma.team.findFirst({
+        where: { isCommittee: true },
+        select: { id: true },
+      })
+    );
+  }
 );
 
 // Get all team + members for public
