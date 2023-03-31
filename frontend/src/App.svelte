@@ -14,6 +14,7 @@
   import Leaderboard from "./lib/pages/Leaderboard.svelte";
   import PublicTeam from "./lib/pages/PublicTeam.svelte";
   import { GearFill } from "svelte-bootstrap-icons";
+  import { SvelteToast } from "@zerodevx/svelte-toast";
 
   // Import our custom CSS
   import "./scss/styles.scss";
@@ -33,6 +34,7 @@
 </script>
 
 <Router {url}>
+  <SvelteToast />
   {#if path !== "login" && path !== "register" && $isLoggedIn}
     <nav class="navbar navbar-expand-lg bg-primary">
       <div class="container-fluid">
