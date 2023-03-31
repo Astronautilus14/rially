@@ -19,7 +19,6 @@
     const data = new FormData(event.target);
     const teamName = data.get("teamName");
     if (!teamName) return;
-    isLoading.set(true);
 
     fetchPlusPlus("teams", "POST", { teamName }, true);
   }

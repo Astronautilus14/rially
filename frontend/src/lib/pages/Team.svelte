@@ -25,29 +25,12 @@
   let loadingMemberDeletes = {};
   function handleMemberDelete(id: number) {
     loadingMemberDeletes[id] = true;
-    fetch(`${settings.api_url}/teams/member`, {
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
-      method: "DELETE",
-      body: JSON.stringify({
-        userId: id,
-      }),
-    })
-      .then((res) => {
-        if (res.ok)
-          return (team.members = team.members.filter(
-            (member) => member.id !== id
-          ));
-        res.json().then((data) => (error = data.message));
-      })
-      .catch((e) => (error = e))
-      .finally(() => {
-        loadingMemberDeletes[id] = false;
-        delete loadingMemberDeletes[id];
-        error = "";
-      });
+    fetchPlusPlus("/teams/member", "DELETE", { userId: id }).finally(() => {
+      team.members = team.members.filter((member) => member.id !== id);
+      loadingMemberDeletes[id] = false;
+      delete loadingMemberDeletes[id];
+      error = "";
+    });
   }
 
   let loadingChangeName = false;
@@ -57,31 +40,14 @@
     if (!newName) return;
 
     loadingChangeName = true;
-    fetch(`${settings.api_url}/teams`, {
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
-      method: "PATCH",
-      body: JSON.stringify({
-        newName,
-        teamId: team.id,
-      }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          team.name = newName;
-          return;
-        }
-        if (res.status === 401 || res.status === 403)
-          return navigate("/login", { replace: true });
-        res.json().then((data) => (error = data.message));
-      })
-      .catch((e) => (error = e))
-      .finally(() => {
+    console.log("Changing name");
+    fetchPlusPlus("/teams", "PATCH", { newName, teamId: team.id }).finally(
+      () => {
+        team.name = newName;
         loadingChangeName = false;
         error = "";
-      });
+      }
+    );
   }
 </script>
 

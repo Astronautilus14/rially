@@ -8,7 +8,9 @@ let fetchPlusPlus = (url, method?, body?, shouldReload?) => {
   // Own fetch including isLoading, error handling and returning the promise data
   if (url[0] === "/") url = url.slice(1);
 
-  isLoading.set(true);
+  console.log("fethcing ++");
+  //   isLoading.set(true);
+
   return new Promise((resolve, reject) => {
     fetch(`${settings.api_url}/${url}`, {
       headers: {
@@ -19,22 +21,31 @@ let fetchPlusPlus = (url, method?, body?, shouldReload?) => {
       body: body ? JSON.stringify(body) : undefined,
     })
       .then((res) => {
-        if (res.ok) return res.json();
-        if (res.status === 401 || res.status === 403)
-          return navigate("/login", { replace: true });
+        console.log("Got a RESPONSEO");
+        if (res.ok) {
+          return res.json();
+        }
+        if (res.status === 401 || res.status === 403) {
+          isLoading.set(false);
+          reject("Not logged in");
+          navigate("/login", { replace: true });
+        }
+
         reject();
         res.json().then((data) => {
-          isLoading.set(false);
           showError(data.message);
-          return;
+          isLoading.set(false);
+          reject(data.message);
         });
       })
       .then((data) => {
         // Resolving data
+        console.log("resolving");
         resolve(data);
       })
       .catch((e) => reject(e))
       .finally(() => {
+        // isloading is weird with finally or smth
         isLoading.set(false);
         if (shouldReload) window.location.reload();
       });
