@@ -46,8 +46,7 @@
       <GlassCard title="Register">
         {#if succes}
           <h2>
-            Success! You can now return to the discord server, have a magical
-            ride!
+            Success! You can now return to the discord server. The committee will put you in your team soon, then you can make submissions. Have a magical ride!
           </h2>
         {:else}
           <form on:submit|preventDefault={registerSubmit}>

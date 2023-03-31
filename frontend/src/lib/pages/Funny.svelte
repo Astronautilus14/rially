@@ -60,7 +60,7 @@
                   </Link>
                 </td>
                 <td>
-                  <Link to={`/submissions/${submission.type}/${submission.id}`}>
+                  <Link to={`/submission/${submission.type}/${submission.id}`}>
                     More
                   </Link>
                 </td>

@@ -350,9 +350,18 @@ router.get("/funny", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   });
 
   Promise.all([challange, puzzle, crazy88])
-    .then(([challange, puzzle, crazy88]) =>
-      res.json({ submissions: [...challange, ...puzzle, ...crazy88] })
-    )
+    .then(([challange, puzzle, crazy88]) => {
+      // @ts-expect-error
+      challange.map((s) => (s.type = "challange"));
+      // @ts-expect-error
+      puzzle.map((s) => (s.type = "puzzle"));
+      // @ts-expect-error
+      crazy88.map((s) => (s.type = "crazy88"));
+
+      res.json({
+        submissions: [...challange, ...puzzle, ...crazy88],
+      });
+    })
     .catch((e) => {
       console.error(e);
       sendError(res);
