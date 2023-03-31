@@ -23,7 +23,8 @@
     })
       .then(async (res) => {
         if (res.ok) return res.json();
-        if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
+        if (res.status === 401 || res.status === 403)
+          return navigate("/login", { replace: true });
         error = (await res.json()).message;
       })
       .then((data) => {
@@ -88,8 +89,20 @@
               <p>Location: {submission?.location}</p>
               <p>Team id: {submission?.teamId}</p>
               <p>Grade: {submission?.grading ?? "not graded yet"}</p>
-              <p>Speed place: {speedPlace}{speedPlace === 1 ? "st" : speedPlace === 2 ? "snd" : speedPlace === 3 ? "rd" : "th"}</p>
-              <p>Submission time: {(new Date(submission?.timeSubmitted)).toTimeString().split(" ")[0]}</p>
+              <p>
+                Speed place: {speedPlace}{speedPlace === 1
+                  ? "st"
+                  : speedPlace === 2
+                  ? "snd"
+                  : speedPlace === 3
+                  ? "rd"
+                  : "th"}
+              </p>
+              <p>
+                Submission time: {new Date(submission?.timeSubmitted)
+                  .toTimeString()
+                  .split(" ")[0]}
+              </p>
             </div>
 
             <div class="actions col-6 col-md-3">
@@ -103,7 +116,9 @@
               <form on:submit|preventDefault={handleApprove} class="">
                 <input
                   type="number"
-                  value={type === "puzzle" ? (5 + Math.max(4-speedPlace, 0)).toString() : null}
+                  value={type === "puzzle"
+                    ? (5 + Math.max(4 - speedPlace, 0)).toString()
+                    : null}
                   name="score"
                   placeholder="Grade"
                   class="form-control mb-3"
@@ -118,10 +133,9 @@
               </form>
 
               {#if !isGraded}
-              <button 
-                class="btn btn-danger mb-3"
-                on:click={() => grade(0)}
-              >Decline</button>
+                <button class="btn btn-danger mb-3" on:click={() => grade(0)}
+                  >Decline</button
+                >
               {/if}
             </div>
 
@@ -137,7 +151,11 @@
                 <!-- svelte-ignore a11y-media-has-caption -->
                 <video src={submission?.fileLink} controls />
               {:else}
-                <p>File type not supported. Click <a href={submission?.fileLink}>here</a> to download it.</p>
+                <p>
+                  File type not supported. Click <a href={submission?.fileLink}
+                    >here</a
+                  > to download it.
+                </p>
               {/if}
             </div>
           {/if}

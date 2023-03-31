@@ -222,6 +222,46 @@ router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   );
 });
 
+router.get("/past", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  const puzzles = prisma.puzzlesubmission.findMany({
+    where: {
+      NOT: {
+        grading: null,
+      },
+    },
+    include: { team: true },
+  });
+  const challanges = prisma.challangesubmission.findMany({
+    where: {
+      NOT: {
+        grading: null,
+      },
+    },
+    include: { team: true },
+  });
+  const crazy88 = prisma.crazy88submission.findMany({
+    where: {
+      NOT: {
+        grading: null,
+      },
+    },
+    include: { team: true },
+  });
+  Promise.all([puzzles, challanges, crazy88]).then(
+    ([puzzles, challanges, crazy88]) => {
+      // @ts-expect-error
+      puzzles.map((submission) => (submission.type = "puzzle"));
+      // @ts-expect-error
+      challanges.map((submission) => (submission.type = "challange"));
+      // @ts-expect-error
+      crazy88.map((submission) => (submission.type = "crazy88"));
+      return res.json({
+        pending: [...puzzles, ...challanges, ...crazy88],
+      });
+    }
+  );
+});
+
 router.get(
   "/:type/:id",
   tokenCheck,
