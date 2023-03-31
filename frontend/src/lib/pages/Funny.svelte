@@ -34,7 +34,6 @@
           <thead>
             <tr>
               <th>Submission</th>
-              <th>Team</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -47,7 +46,7 @@
                       src={submission?.fileLink}
                       alt="Submission"
                       width="400"
-                      class=""
+                      style="max-height: 60vh; max-width: 40vw;"
                     />
                   {:else if /.*.(mp4|webm|ogg)$/i.test(submission?.fileLink)}
                     <!-- svelte-ignore a11y-media-has-caption -->
@@ -56,15 +55,14 @@
                 </td>
                 <td>
                   <Link to={`/teams/${submission.team.id}`}>
+                    <span class="badge bg-secondary">Team</span>
                     {submission.team.name}
-                  </Link>
-                </td>
-                <td>
+                  </Link> <br />
                   <Link to={`/submission/${submission.type}/${submission.id}`}>
                     More
                   </Link>
-                </td>
-              </tr>
+                </td></tr
+              >
             {/each}
           </tbody>
         </table>
