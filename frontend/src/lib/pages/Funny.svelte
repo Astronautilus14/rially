@@ -30,42 +30,38 @@
   <div class="row justify-content-md-center">
     <div class="col-12 col-sm-10">
       <GlassCard title="Funny submissions">
-        <table class="table table-bordered border-white">
-          <thead>
-            <tr>
-              <th>Submission</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each data as submission}
-              <tr>
-                <td>
-                  {#if /.*.(png|jpg|jpeg|gif|webp|avif|apng|bmp)$/i.test(submission?.fileLink)}
-                    <img
-                      src={submission?.fileLink}
-                      alt="Submission"
-                      width="400"
-                      style="max-height: 60vh; max-width: 40vw;"
-                    />
-                  {:else if /.*.(mp4|webm|ogg)$/i.test(submission?.fileLink)}
-                    <!-- svelte-ignore a11y-media-has-caption -->
-                    <video src={submission?.fileLink} controls />
-                  {/if}
-                </td>
-                <td>
+        <div class="row row-col-4">
+          {#each data as submission}
+            <div class="card col mx-2" style="width: 18rem;">
+              {#if /.*.(png|jpg|jpeg|gif|webp|avif|apng|bmp)$/i.test(submission?.fileLink)}
+                <img
+                  src={submission?.fileLink}
+                  alt="Submission"
+                  width="400"
+                  style="max-height: 400px;"
+                  class="card-img-top img-fluid"
+                />
+              {:else if /.*.(mp4|webm|ogg)$/i.test(submission?.fileLink)}
+                <!-- svelte-ignore a11y-media-has-caption -->
+                <video src={submission?.fileLink} controls />
+              {/if}
+              <div class="card-body">
+                <h5 class="card-title">
+                  Team
                   <Link to={`/teams/${submission.team.id}`}>
-                    <span class="badge bg-secondary">Team</span>
                     {submission.team.name}
-                  </Link> <br />
-                  <Link to={`/submission/${submission.type}/${submission.id}`}>
-                    More
                   </Link>
-                </td></tr
-              >
-            {/each}
-          </tbody>
-        </table>
+                </h5>
+                <Link
+                  class="btn btn-primary"
+                  to={`/submission/${submission.type}/${submission.id}`}
+                >
+                  More
+                </Link>
+              </div>
+            </div>
+          {/each}
+        </div>
       </GlassCard>
     </div>
   </div>
