@@ -101,7 +101,7 @@ router.post(
         res,
         `Your team already submitted a photo or video for crazy 88 task ${number}. ${
           challangesubmission.grading === null
-            ? "Your submission will be graded as soon as possible"
+            ? "Your submission will be graded as soon as possible."
             : ""
         }`,
         400
@@ -157,7 +157,7 @@ router.post(
         res,
         `Your team already submitted a photo or video for crazy 88 task ${number}. ${
           crazy88submission.grading === null
-            ? "Your submission will be graded as soon as possible"
+            ? "Your submission will be graded as soon as possible."
             : ""
         }`,
         400
@@ -287,8 +287,8 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }: { type: string; id: number; grading: number; isFunny: boolean } = req.body;
   if (!type || !id || grading === null || grading === undefined)
     return sendError(res, "Type, Grading and ID required", 400);
+
   let table;
-  let status = null;
   switch (type) {
     case "crazy88":
       table = prisma.crazy88submission;

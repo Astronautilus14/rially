@@ -48,26 +48,22 @@ router.post("/", verifyToken, async (req, res) => {
       message: "Channel not found",
     });
 
-  if (type === "puzzle") {
-    channel.send(
-      `Your puzzle submission for location ${location} has been ${
-        grading < 1
-          ? "rejected"
-          : `graded with ${grading} point${
-              grading > 1 ? "s" : ""
-            }! You can now see the location challanges and next puzzles in the puzzles categoty.`
-      }`
-    );
-  } else {
-    channel.send(
-      // TODO dit nice maken voor rejection en puzzle submission
-      `Your ${type} submission ${number ? "number " + number : ""} has been ${
-        grading > 0
-          ? `graded with ${grading} point${grading > 1 ? "s" : ""}!`
-          : "rejected"
-      }`
-    );
-  }
+  channel.send(
+    // TODO dit nice maken voor rejection en puzzle submission
+    `Your ${type} submission ${number ? `${number} ` : ""}${
+      location ? `for location ${location} ` : ""
+    }has been ${
+      grading > 0
+        ? `graded with ${grading} point${grading > 1 ? "s" : ""}! ${
+            type === "puzzle"
+              ? `You can now see the location challanges${
+                  location !== 3 ? " and next puzzles " : " "
+                }in the puzzle category.`
+              : ""
+          }`
+        : "rejected"
+    }`
+  );
 
   if (type !== "puzzle") return res.sendStatus(200);
 

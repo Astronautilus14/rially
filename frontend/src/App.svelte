@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Router, Link, Route } from "svelte-routing";
+  import { Router, Link, Route, navigate } from "svelte-routing";
   import { isLoggedIn } from "./stores/accountStore";
 
   import Register from "./lib/pages/Register.svelte";
@@ -22,6 +22,11 @@
   export let url = "";
   const location = window.location.href.split("/");
   const path = location[location.length - 1];
+
+  function logout() {
+    localStorage.removeItem("rially::token");
+    navigate("/login", {replace: true})
+  }
 </script>
 
 <Router {url}>
@@ -37,6 +42,8 @@
             <Link to="/grading" class="nav-link">Grading</Link>
             <Link to="/funny" class="nav-link">Funny</Link>
             <Link to="/leaderboard" class="nav-link">Leaderboard</Link>
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <span class="nav-link logout" on:click={logout}>Log out</span>
           </div>
         </div>
       </div>
@@ -63,3 +70,11 @@
     <Route path="/" component={Home} />
   </div>
 </Router>
+
+<style>
+  .logout {
+    cursor: pointer;
+    position: absolute;
+    right: 12px;
+  }
+</style>
