@@ -181,12 +181,46 @@ router.post("/login", async (req, res) => {
   if (!user.password) return sendError(res, "No password set", 400);
   if (await bcrypt.compare(password, user.password)) {
     const token = jwt.sign({ uid: user.id }, secretKey);
-    res.send(
-      JSON.stringify({
-        token,
-      })
-    );
+    return res.json({ token });
+  } else {
+    return sendError(res, "Password incorect", 400);
   }
+});
+
+router.post("/changepassword", tokenCheck, async (req, res) => {
+  const {
+    oldPassword,
+    newPassword,
+  }: { oldPassword: string; newPassword: string } = req.body;
+  if (!oldPassword || !newPassword)
+    return sendError(res, "oldPassword and newPassword required", 400);
+
+  const user = await prisma.user.findUnique({
+    // @ts-expect-error
+    where: { id: req.data.uid },
+  });
+  if (!user?.password)
+    return sendError(
+      res,
+      "User ID not found or the user has no password set",
+      404
+    );
+
+  if (!(await bcrypt.compare(oldPassword, user.password)))
+    return sendError(res, "Old password incorrect", 400);
+
+  if (newPassword.length < 6)
+    return sendError(res, "Password must be at least 6 characters", 400);
+
+  const salt = await bcrypt.genSalt(10);
+  const hash = await bcrypt.hash(newPassword, salt);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hash },
+  });
+
+  return res.sendStatus(200);
 });
 
 export function tokenCheck(req: Request, res: Response, next: NextFunction) {

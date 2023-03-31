@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const client = new PrismaClient();
 
-const run = async () => {
+const main = async () => {
   const createTeamAndUser = client.team
     .upsert({
       where: {
@@ -44,7 +44,7 @@ const run = async () => {
   await Promise.all([createTeamAndUser, setVariables]);
 };
 
-run()
+main()
   .then(async () => {
     await client.$disconnect();
   })
