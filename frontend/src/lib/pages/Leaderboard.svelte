@@ -38,7 +38,7 @@
 
   function handlePublicSwitch() {
     isPublic = !isPublic;
-    isLoading.set(true);
+    // isLoading.set(true);
     fetch(`${settings.api_url}/leaderboard`, {
       method: "PATCH",
       headers: {
@@ -148,11 +148,11 @@
   }
 
   input:checked + .slider {
-    background-color: #2196f3;
+    background-color: #720acc;
   }
 
   input:focus + .slider {
-    box-shadow: 0 0 1px #2196f3;
+    box-shadow: 0 0 1px #720acc;
   }
 
   input:checked + .slider:before {
