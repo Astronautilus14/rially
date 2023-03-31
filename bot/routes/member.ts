@@ -64,12 +64,15 @@ router.post("/", verifyToken, async (req, res) => {
       message: "User not found",
     });
 
-  Promise.all([user.roles.remove(user.roles.cache), user.roles.add(role)])
-    .then(() => res.sendStatus(200))
-    .catch((error) => {
-      console.error(error);
-      res.sendStatus(500);
-    });
+  try {
+    await user.roles.remove(user.roles.cache);
+    await user.roles.add(role);
+  } catch (error) {
+    console.error(error);
+    return res.sendStatus(500);
+  }
+
+  return res.sendStatus(200);
 });
 
 export default router;

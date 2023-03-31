@@ -6,6 +6,7 @@ import cors from "cors";
 
 import register from "./commands/register";
 import help from "./commands/help";
+import leaderboard from "./commands/leaderboard";
 import submission from "./commands/submission";
 
 import teamsRouter from "./routes/teams";
@@ -49,6 +50,9 @@ client.on("interactionCreate", async (interaction) => {
       break;
     case "submission":
       await submission(interaction);
+      break;
+    case "leaderboard":
+      await leaderboard(interaction);
       break;
   }
 });

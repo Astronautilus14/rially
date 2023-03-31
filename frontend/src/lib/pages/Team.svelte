@@ -66,12 +66,13 @@
       }),
     })
       .then((res) => {
-        if (res.ok) return;
+        if (res.ok) return team.members = team.members.filter(member => member.id !== id);
         res.json().then((data) => (error = data.message));
       })
       .catch((e) => (error = e))
       .finally(() => {
-        delete loadingMemberDeletes[id];
+        loadingMemberDeletes[id] = false;
+        delete loadingMemberDeletes[id]
         error = "";
       });
   }

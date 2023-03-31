@@ -75,6 +75,10 @@ const commands = [
             .setMaxValue(88)
         )
     ),
+
+  new SlashCommandBuilder()
+    .setName("leaderboard")
+    .setDescription("Check out the current standings"),
 ];
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN!);

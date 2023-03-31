@@ -44,6 +44,7 @@ router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   WHERE t.teamId = team.id
   AND team.isCommittee = 0
   GROUP BY t.teamId
+  ORDER BY score DESC;
 `;
   res.json({ teams });
 });

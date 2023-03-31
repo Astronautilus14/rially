@@ -10,8 +10,14 @@
   let error = "";
   let isPublic = true;
 
-  onMount(() => {
+  onMount(async () => {
     isLoading.set(true);
+    await fetchStanding();
+    isLoading.set(false);
+    setInterval(fetchStanding, 2 * 60 * 1000);
+  });
+
+  async function fetchStanding() {
     fetch(`${settings.api_url}/leaderboard${$isLoggedIn ? "" : "/public"}`, {
       headers: {
         Authorization: localStorage.getItem("rially::token"),
@@ -27,9 +33,8 @@
         data = body.teams;
         isPublic = body.isPublic ?? true;
       })
-      .catch((e) => (error = e))
-      .finally(() => isLoading.set(false));
-  });
+      .catch((e) => (error = e));
+  }
 
   function handlePublicSwitch() {
     isPublic = !isPublic;
