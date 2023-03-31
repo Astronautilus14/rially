@@ -9,6 +9,8 @@ body {
 
   background: #720acc;
   background: radial-gradient(circle, #730acd 0%, rgba(28, 5, 61, 1) 100%);
+
+  overflow-x: hidden;
 }
 
 /* Fix body not aligning on top: */
