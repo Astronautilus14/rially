@@ -25,4 +25,3 @@ dist-ssr
 .env
 /frontend/dist
 settings.json
-/prisma/migrations
