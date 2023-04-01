@@ -75,7 +75,7 @@
                     {/if}
                   </td>
                   <td>
-                    <Link to={`/${submission?.type}/${submission?.id}`}>More</Link>
+                    <Link to={`/submission/${submission?.type}/${submission?.id}`}>More</Link>
                   </td>
                 </tr>
               {/each}

@@ -290,6 +290,7 @@ router.get(
     // @ts-expect-error
     const submission = await table.findUnique({
       where: { id },
+      include: { team: true },
     });
     if (!submission)
       return sendError(res, "Combination Type and ID is unkown", 404);

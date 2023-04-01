@@ -4,6 +4,7 @@
   import { io } from "socket.io-client";
   import { navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
+  import { Link } from "svelte-routing";
 
   export let id: string;
   export let type: string;
@@ -89,14 +90,19 @@
               <p class="error">{error}</p>
             {/if}
             <div class="col-md-3 col-6">
-              <p>Location: {submission?.location}</p>
-              <p>Team id: {submission?.teamId}</p>
+              {#if submission?.location}
+                <p>Location: {submission?.location}</p>
+              {/if}
+              {#if submission?.number}
+                <p>Number: {submission?.number}</p>
+              {/if}
+              <p>Team: <Link to={`/teams/${submission?.team.id}`}>{submission?.team?.name}</Link></p>
               <p>Grade: {submission?.grading ?? "not graded yet"}</p>
               <p>
                 Speed place: {speedPlace}{speedPlace === 1
                   ? "st"
                   : speedPlace === 2
-                  ? "snd"
+                  ? "nd"
                   : speedPlace === 3
                   ? "rd"
                   : "th"}
@@ -167,9 +173,3 @@
     </div>
   </div>
 </main>
-
-<style lang="scss">
-  .error {
-    color: red;
-  }
-</style>
