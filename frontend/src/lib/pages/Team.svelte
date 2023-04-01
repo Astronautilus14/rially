@@ -3,27 +3,17 @@
   import { navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
+  import { fetchPlusPlus } from "../../stores/dbStore";
+  import { isLoading } from "../../stores/loadingStore";
 
   export let id: string;
   let error = "";
-  let loading = true;
 
   let team;
   onMount(() => {
-    fetch(`${settings.api_url}/teams/${id}`, {
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-      },
-    })
-      .then( async (res) => {
-        if (res.ok) return res.json();
-        throw Error((await res.json()).message);
-      })
-      .then((data) => {
-        team = data;
-      })
-      .catch((e) => (error = e))
-      .finally(() => (loading = false));
+    fetchPlusPlus(`/teams/${id}`).then((data) => {
+      team = data;
+    });
   });
 
   let loadingTeamDelete = false;
@@ -57,26 +47,12 @@
   function handleMemberDelete(id: number) {
     if (loadingMemberDeletes[id]) return;
     loadingMemberDeletes[id] = true;
-    fetch(`${settings.api_url}/teams/member`, {
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
-      method: "DELETE",
-      body: JSON.stringify({
-        userId: id,
-      }),
-    })
-      .then((res) => {
-        if (res.ok) return team.members = team.members.filter(member => member.id !== id);
-        res.json().then((data) => (error = data.message));
-      })
-      .catch((e) => (error = e))
-      .finally(() => {
-        loadingMemberDeletes[id] = false;
-        delete loadingMemberDeletes[id]
-        error = "";
-      });
+    fetchPlusPlus("/teams/member", "DELETE", { userId: id }).finally(() => {
+      team.members = team.members.filter((member) => member.id !== id);
+      loadingMemberDeletes[id] = false;
+      delete loadingMemberDeletes[id];
+      error = "";
+    });
   }
 
   let loadingChangeName = false;
@@ -87,41 +63,23 @@
     if (!newName) return;
 
     loadingChangeName = true;
-    fetch(`${settings.api_url}/teams`, {
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
-      method: "PATCH",
-      body: JSON.stringify({
-        newName,
-        teamId: team.id
-      }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          team.name = newName;
-          return;
-        };
-        if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
-        res.json().then((data) => (error = data.message));
-      })
-      .catch((e) => (error = e))
-      .finally(() => {
+    console.log("Changing name");
+    fetchPlusPlus("/teams", "PATCH", { newName, teamId: team.id }).finally(
+      () => {
+        team.name = newName;
         loadingChangeName = false;
         error = "";
-      });
+      }
+    );
   }
 </script>
 
 <main class="contianer">
   <div class="row justify-content-md-center">
     <div class="col-12 col-sm-10">
-      <GlassCard title={loading ? "Loading..." : team?.name}>
-        <div class="row">
-          {#if loading}
-            <p>Loading...</p>
-          {:else}
+      <GlassCard title={$isLoading ? "Loading..." : team?.name}>
+        {#if team}
+          <div class="row">
             {#if error}
               <p class="error">{error}</p>
             {/if}
@@ -194,57 +152,16 @@
                 />
               </form>
               {#if !team.isCommittee}
-                <button class="btn btn-danger" on:click={handleTeamDelete}
-                  >{loadingTeamDelete ? "Loading..." : "Delete team"}</button
+                <button class="btn btn-danger" on:click={handleTeamDelete}>
+                  Delete team</button
                 >
               {/if}
             </div>
-          {/if}
-        </div>
+          </div>
+        {:else}
+          <p>Team not found</p>
+        {/if}
       </GlassCard>
     </div>
   </div>
 </main>
-
-<style lang="scss">
-  //   * {
-  //     margin: 0;
-  //     padding: 0;
-  //     box-sizing: border-box;
-  //   }
-
-  //   main {
-  //     padding: 2rem;
-
-  //     hr {
-  //       margin: 1rem;
-  //     }
-
-  //     .error {
-  //       color: red;
-  //     }
-
-  //     .user, .data {
-  //       padding: 0.5rem;
-  //       margin: 0.5rem;
-  //       background-color: lightblue;
-  //       width: fit-content;
-  //     }
-
-  //     form {
-  //       display: flex;
-  //       flex-direction: column;
-  //       width: fit-content;
-  //       gap: 5px;
-  //       margin: 0.5rem 0;
-  //     }
-
-  //     .delete {
-  //       background-color: red;
-  //       color: white;
-  //       padding: 5px;
-  //       margin-top: 1rem;
-  //       font-size: 0.7rem;
-  //     }
-  //   }
-</style>
