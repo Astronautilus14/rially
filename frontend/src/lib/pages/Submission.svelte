@@ -36,6 +36,7 @@
   });
 
   function grade(score: number) {
+    if(loading) return;
     loading = true;
 
     fetch(`${settings.api_url}/submissions/grade`, {

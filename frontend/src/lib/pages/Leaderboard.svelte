@@ -37,8 +37,9 @@
   }
 
   function handlePublicSwitch() {
+    if ($isLoading) return;
     isPublic = !isPublic;
-    // isLoading.set(true);
+    isLoading.set(true);
     fetch(`${settings.api_url}/leaderboard`, {
       method: "PATCH",
       headers: {

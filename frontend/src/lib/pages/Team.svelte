@@ -28,6 +28,7 @@
 
   let loadingTeamDelete = false;
   function handleTeamDelete() {
+    if (loadingTeamDelete) return;
     loadingTeamDelete = true;
     fetch(`${settings.api_url}/teams`, {
       headers: {
@@ -54,6 +55,7 @@
 
   let loadingMemberDeletes = {};
   function handleMemberDelete(id: number) {
+    if (loadingMemberDeletes[id]) return;
     loadingMemberDeletes[id] = true;
     fetch(`${settings.api_url}/teams/member`, {
       headers: {
@@ -79,6 +81,7 @@
 
   let loadingChangeName = false;
   async function handleChangeName(event) {
+    if (loadingChangeName) return;
     const data = new FormData(event.target);
     const newName = data.get("newName");
     if (!newName) return;

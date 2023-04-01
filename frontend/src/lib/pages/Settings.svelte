@@ -37,6 +37,7 @@
   
   let changePassLoading = false;
   function handleChangePassword(event: any) {
+    if (changePassLoading) return;
     const data = new FormData(event.target);
     const oldPassword = data.get("oldPassword");
     const newPassword = data.get("newPassword");
@@ -65,6 +66,7 @@
   let addUserLoading = false;
   let addUserSucces = false;
   function handleAddUserToCommittee(event: any) {
+    if (addUserLoading) return;
     addUserSucces = false;
     const data = new FormData(event.target);
     const id = Number(data.get("user"));

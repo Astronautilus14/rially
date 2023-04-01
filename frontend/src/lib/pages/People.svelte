@@ -31,11 +31,12 @@
 
   function handleAddUserToTeam(event) {
     const data = new FormData(event.target);
-    const teamId = Number(data.get("teamId"));
     const userId = Number(data.get("userId"));
+    const teamId = Number(data.get("teamId"));
 
     if (!teamId || !userId) return;
     if (Number.isNaN(teamId) || Number.isNaN(userId)) return;
+    if (isLoading[userId]) return;
     isLoading[userId] = true;
 
     fetch(`${settings.api_url}/teams/member`, {
@@ -63,6 +64,7 @@
         error = e;
       })
       .finally(() => {
+        isLoading[userId] = false;
         delete isLoading[userId];
       });
   }

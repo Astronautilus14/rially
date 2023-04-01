@@ -28,6 +28,7 @@
   });
 
   function handleCreateTeam(event) {
+    if ($isLoading) return;
     const data = new FormData(event.target);
     const teamName = data.get("teamName");
     if (!teamName) return;

@@ -267,7 +267,11 @@ export async function teamCheck(
     return sendError(res);
   }
   if (!user.team)
-    return sendError(res, "You need to be in a team for this", 403);
+    return sendError(
+      res,
+      "You need to be placed in a team for this. Contact the committee if you registered more than 30 minutes ago since they might have forgotten to place you in your team!",
+      403
+    );
   // @ts-expect-error
   req.data.team = user.team;
   next();
@@ -306,7 +310,8 @@ export async function checkDiscordId(
       team: true,
     },
   });
-  if (!user) return sendError(res, "Discord ID is unkown", 401);
+  if (!user)
+    return sendError(res, "Discord ID is unkown, did you do /register?", 401);
   req.data = {
     uid: user.id,
     username: user.username,

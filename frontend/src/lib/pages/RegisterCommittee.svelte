@@ -9,6 +9,7 @@
   let error = "";
 
   const registerSubmit = (event) => {
+    if (loading) return;
     loading = true;
     error = "";
     const data = new FormData(event.target);
