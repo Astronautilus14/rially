@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import settings from "../settings.json";
-  import socket from "../socket";
+  import { io } from "socket.io-client";
   import { navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
 
   export let id: string;
   export let type: string;
+
+  const socket = io(settings.socketServerUrl)
 
   let submission;
   let loading = true;

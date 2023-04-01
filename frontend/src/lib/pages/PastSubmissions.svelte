@@ -43,6 +43,7 @@
                 <th scope="col">Team</th>
                 <th scope="col">Type</th>
                 <th scope="col">Submission</th>
+                <th scope="col">More</th>
               </tr>
             </thead>
             <tbody>
@@ -72,6 +73,9 @@
                         > to download it.
                       </p>
                     {/if}
+                  </td>
+                  <td>
+                    <Link to={`/${submission?.type}/${submission?.id}`}>More</Link>
                   </td>
                 </tr>
               {/each}
