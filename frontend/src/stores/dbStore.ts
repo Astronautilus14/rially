@@ -3,7 +3,7 @@ import { readable } from "svelte/store";
 import { navigate } from "svelte-routing";
 import { isLoading, showError } from "./loadingStore";
 import settings from "../lib/settings.json";
-
+// Why not const?
 let fetchPlusPlus = (url, method?, body?, shouldReload?) => {
   // Own fetch including isLoading, error handling and returning the promise data
   if (url[0] === "/") url = url.slice(1);
@@ -31,7 +31,7 @@ let fetchPlusPlus = (url, method?, body?, shouldReload?) => {
           navigate("/login", { replace: true });
         }
 
-        reject();
+        reject(); // Shouldnt this be removed?
         res.json().then((data) => {
           showError(data.message);
           isLoading.set(false);
