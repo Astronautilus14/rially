@@ -32,6 +32,7 @@ CREATE TABLE `puzzlesubmission` (
     `grading` INTEGER NULL,
     `location` INTEGER NOT NULL,
     `isFunny` BOOLEAN NOT NULL DEFAULT false,
+    `timeSubmitted` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `puzzlesubmission_fileLink_key`(`fileLink`),
     PRIMARY KEY (`id`)
@@ -46,6 +47,7 @@ CREATE TABLE `challangesubmission` (
     `location` INTEGER NOT NULL,
     `number` INTEGER NOT NULL,
     `isFunny` BOOLEAN NOT NULL DEFAULT false,
+    `timeSubmitted` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `challangesubmission_fileLink_key`(`fileLink`),
     PRIMARY KEY (`id`)
@@ -59,9 +61,18 @@ CREATE TABLE `crazy88submission` (
     `grading` INTEGER NULL,
     `number` INTEGER NOT NULL,
     `isFunny` BOOLEAN NOT NULL DEFAULT false,
+    `timeSubmitted` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `crazy88submission_fileLink_key`(`fileLink`),
     PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `variables` (
+    `key` VARCHAR(191) NOT NULL,
+    `value` VARCHAR(191) NULL,
+
+    PRIMARY KEY (`key`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey

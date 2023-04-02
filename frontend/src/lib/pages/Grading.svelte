@@ -2,8 +2,10 @@
   import settings from "../settings.json";
   import { onMount } from "svelte";
   import { navigate } from "svelte-routing";
-  import socket from "../socket";
   import GlassCard from "../../components/GlassCard.svelte";
+  import { io } from "socket.io-client"
+
+  const socket = io(settings.socketServerUrl);
 
   let mounted = false;
   let pending: { id: number; active: boolean; type: string }[] = [];

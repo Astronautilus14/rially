@@ -4,12 +4,16 @@
   import GlassCard from "../../components/GlassCard.svelte";
   import { isLoggedIn } from "../../stores/accountStore";
 
+  let loading = false;
+
   function handelSubmit(event) {
+    if (loading) return;
     const data = new FormData(event.target);
     const username = data.get("username");
     const password = data.get("password");
     if (!username || !password) return;
 
+    loading = true;
     fetch(`${settings.api_url}/auth/login`, {
       method: "POST",
       headers: {
@@ -29,10 +33,13 @@
         isLoggedIn.set(true);
         navigate("/grading", { replace: true });
       })
-      .catch((res) => {
+      .catch( async (res) => {
         console.log(res);
-        alert(res.json().message);
-      });
+        alert((await res.json()).message);
+      })
+      .finally(() => {
+        loading = false;
+      })
   }
 </script>
 
@@ -66,7 +73,7 @@
           </div>
 
           <div class="mb-3">
-            <button class="btn btn-primary btn-lg" type="submit">Log in</button>
+            <button class="btn btn-primary btn-lg" type="submit">{loading ? "Loading..." : "Log in"}</button>
           </div>
         </form>
         <Link to="/register/committee">No account? Register first!</Link>

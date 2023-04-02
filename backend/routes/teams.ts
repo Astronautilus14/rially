@@ -117,6 +117,7 @@ router.patch(
     if (!newName || !teamId)
       return sendError(res, "New name and Team ID are required", 400);
     if (!req.data?.team?.id) return sendError(res);
+
     prisma.team
       .update({
         where: {

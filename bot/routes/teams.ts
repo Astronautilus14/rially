@@ -100,6 +100,7 @@ router.post("/", verifyToken, async (req, res) => {
   });
 });
 
+// let i = 0;
 // Change team name
 router.patch("/", verifyToken, async (req, res) => {
   const {
@@ -122,13 +123,24 @@ router.patch("/", verifyToken, async (req, res) => {
   if (!role) return res.status(404).json({ message: "Role ID unkown" });
 
   const channel = await getFromCacheOrFetch(guild.channels, channelId);
-  if (!channel)
+  if (!channel?.isTextBased())
     return res.sendStatus(404).json({ message: "Channel ID unkown" });
 
+  // i++;
+  // const localId = i.toString();
+  // console.log(`Created promise id:${localId}`);
+  // const t1 = Date.now();
   const changeRoleName = role.setName(newName);
   const changeChannelName = (channel as discordjs.TextChannel).setName(newName);
+
   Promise.all([changeRoleName, changeChannelName])
-    .then(() => res.sendStatus(200))
+    .then(() => {
+      // const t2 = Date.now();
+      // console.log(
+      //   `Resolved promise id:${localId} in ${(t2 - t1) / 1000} seconds`
+      // );
+      return res.sendStatus(200);
+    })
     .catch((error) => {
       console.error(error);
       return res.sendStatus(500);

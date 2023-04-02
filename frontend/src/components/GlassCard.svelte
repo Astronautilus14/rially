@@ -7,7 +7,7 @@
 </script>
 
 <div>
-  <div class={(keepBootstrap ? "" : "glass") + " card mx-auto mt-5"}>
+  <div class={(keepBootstrap ? "" : "glass") + " card mx-auto mt-5 mb-5"}>
     {#if header}
       <div class="card-header">
         {header}
