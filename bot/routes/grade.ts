@@ -34,8 +34,6 @@ router.post("/", verifyToken, async (req, res) => {
       message: "Role ID, Channel ID, Type and Grading are required",
     });
 
-  console.log(req.body);
-
   const guild = await getFromCacheOrFetch(
     client.guilds,
     process.env.DISCORD_SERVER_ID!
@@ -53,9 +51,9 @@ router.post("/", verifyToken, async (req, res) => {
 
   channel.send(
     // TODO dit nice maken voor rejection en puzzle submission
-    `Your ${type} submission ${number ? `${number} ` : ""}${
-      location ? `for location ${location} ` : ""
-    }has been ${
+    `Your ${type === "challange" ? "challenge" : type} submission ${
+      number ? `${number} ` : ""
+    }${location ? `for location ${location} ` : ""}has been ${
       grading > 0
         ? `graded with ${grading} point${grading > 1 ? "s" : ""}! ${
             type === "puzzle"

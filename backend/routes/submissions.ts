@@ -24,23 +24,32 @@ router.post(
     if (!fileLink) return sendError(res, "File link required", 400);
 
     // Figure out where they are now
-    const puzzleSubmissions = await prisma.puzzlesubmission.findMany({
+    const approvedPuzzleSubmissions = await prisma.puzzlesubmission.findMany({
       where: {
         // @ts-expect-error
         teamId: req.data.team.id,
+        grading: { gt: 0 },
       },
     });
-    const location = puzzleSubmissions.length + 1;
-    for (const submission of puzzleSubmissions) {
-      if (submission.grading === null)
-        return sendError(
-          res,
-          `Your team already submitted a puzzle for location ${
-            location - 1
-          }. Your submition will be graded as soon as possible.`,
-          400
-        );
-    }
+    const location = approvedPuzzleSubmissions.length + 1;
+
+    const pedingSubmission = await prisma.puzzlesubmission.findFirst({
+      where: {
+        // @ts-expect-error
+        teamId: req.data.team.id,
+        grading: null,
+        location,
+      },
+    });
+
+    if (pedingSubmission)
+      return sendError(
+        res,
+        `Your team already submitted a puzzle for location ${
+          location - 1
+        }. Your submition will be graded as soon as possible.`,
+        400
+      );
 
     let submission;
     try {
@@ -79,10 +88,17 @@ router.post(
       where: {
         // @ts-expect-error
         teamId: req.data.team.id,
-        NOT: { grading: null },
+        grading: { gt: 0 },
       },
     });
     const location = approvedSubmissions.length;
+
+    if (location === 0)
+      return sendError(
+        res,
+        "You can't do a location challenge if you're nou at the first location yet. Did you perhaps mean to do /submission puzzle instead?",
+        400
+      );
 
     // Figure out weather they already submitted
     const challangesubmission = await prisma.challangesubmission.findFirst({
@@ -90,16 +106,13 @@ router.post(
         // @ts-expect-error
         teamId: req.data.team.id,
         number,
-        NOT: {
-          OR: [{ grading: null }, { grading: 0 }],
-        },
       },
     });
 
     if (challangesubmission)
       return sendError(
         res,
-        `Your team already submitted a photo or video for crazy 88 task ${number}. ${
+        `Your team already submitted a photo or video for challenge ${number} at location ${location}. ${
           challangesubmission.grading === null
             ? "Your submission will be graded as soon as possible."
             : ""
@@ -124,7 +137,7 @@ router.post(
     }
 
     res.json({
-      message: `Your submission for location challange ${number} at location ${location} has been received. It will be graded soon.`,
+      message: `Your submission for location challenge ${number} at location ${location} has been received. It will be graded soon.`,
     });
     io.emit("submission", submission.id, "challange");
   }
