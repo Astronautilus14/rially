@@ -30,7 +30,10 @@
       .then((body) => {
         error = body.message;
         if (error) return;
-        data = body.teams;
+        let teamsdata = body.teams;
+        teamsdata.sort((a, b) => b.score - a.score);
+
+        data = teamsdata;
         isPublic = body.isPublic ?? true;
       })
       .catch((e) => (error = e));
