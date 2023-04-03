@@ -18,7 +18,7 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName("submission")
-    .setDescription("Submit a photo")
+    .setDescription("Make a submission")
 
     .addSubcommand((subcommand) =>
       subcommand
@@ -26,20 +26,20 @@ const commands = [
         .setDescription("Submit a puzzle")
         .addAttachmentOption((option) =>
           option
-            .setName("photo")
-            .setDescription("Photo of your submission")
+            .setName("media")
+            .setDescription("Photo or video of your submission")
             .setRequired(true)
         )
     )
 
     .addSubcommand((subcommand) =>
       subcommand
-        .setName("challange")
-        .setDescription("Submit a location challange")
+        .setName("challenge")
+        .setDescription("Submit a location challenge")
         .addAttachmentOption((option) =>
           option
-            .setName("photo")
-            .setDescription("Photo of your submission")
+            .setName("media")
+            .setDescription("Photo or video of your submission")
             .setRequired(true)
         )
         .addIntegerOption((option) =>
@@ -60,8 +60,8 @@ const commands = [
         .setDescription("Submit a crazy 88 task")
         .addAttachmentOption((option) =>
           option
-            .setName("photo")
-            .setDescription("Photo (or video) of your submission")
+            .setName("media")
+            .setDescription("Photo or video of your submission")
             .setRequired(true)
         )
         .addIntegerOption((option) =>
