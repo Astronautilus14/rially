@@ -46,9 +46,9 @@
     <div class="col-12 col-sm-10">
       <GlassCard title="Register">
         {#if succes}
-          <h2>
-            Success! You can now return to the discord server. The committee will put you in your team soon, then you can make submissions. Have a magical ride!
-          </h2>
+          <h5>
+            <b>Success!</b><br>You can now return to the Discord server. The committee will put you in your team soon, then you can make submissions. Have a magical ride!
+          </h5>
         {:else}
           <form on:submit|preventDefault={registerSubmit}>
             <div class="mb-3">
