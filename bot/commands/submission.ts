@@ -110,7 +110,7 @@ export default async function (
 async function checkMedia(interaction: discordjs.ChatInputCommandInteraction) {
   let media: string | null = null;
   try {
-    media = interaction.options.getAttachment("media", true).url;
+    media = interaction.options.getAttachment("media", true)?.url;
   } catch (error) {
     console.error(error);
   }

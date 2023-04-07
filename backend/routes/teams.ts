@@ -248,20 +248,65 @@ router.delete(
           discordId: user.discordId,
         },
         headers: {
-          Authorization: process.env.BOT_API_KEY,
+          Authorization: process.env.BOT_API_KEY!,
         },
       });
     } catch (error) {
       console.error(error);
       sendError(
         res,
-        "User not deleted from old team in discord. User's rights are updated, please manually update the user's roles in discord.",
+        "User not deleted from old team in Discord. User's rights are updated, please manually update the user's role in Discord.",
         500
       );
       return;
     }
 
     return res.sendStatus(200);
+  }
+);
+
+// Change a username
+router.patch(
+  "/member",
+  tokenCheck,
+  teamCheck,
+  isCommittee,
+  async (req, res) => {
+    const { userId, newName }: { userId: number; newName: string } = req.body;
+    if (!userId || !newName)
+      return sendError(res, "User ID and New name required", 400);
+
+    const user = await prisma.user
+      .update({
+        where: { id: userId },
+        data: { username: newName },
+      })
+      .catch((error) => {
+        console.error(error);
+        return sendError(res);
+      });
+    if (!user) return sendError(res, "User ID not found", 404);
+    if (!user.discordId) return res.sendStatus(200);
+
+    try {
+      await axios.patch(
+        `${process.env.BOT_API_URL!}/member`,
+        {
+          userId: user.discordId,
+          newName,
+        },
+        {
+          headers: { Authorization: process.env.BOT_API_KEY! },
+        }
+      );
+      return res.sendStatus(200);
+    } catch (error) {
+      console.error(error);
+      return sendError(
+        res,
+        "Username could not be updated on Discord, please do so manually. Note that usernames don't effect functionality!"
+      );
+    }
   }
 );
 

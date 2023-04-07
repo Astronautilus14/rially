@@ -24,14 +24,14 @@ router.post(
     if (!fileLink) return sendError(res, "File link required", 400);
 
     // Figure out where they are now
-    const approvedPuzzleSubmissions = await prisma.puzzlesubmission.findMany({
+    const approvedPuzzleSubmissions = await prisma.puzzlesubmission.count({
       where: {
         // @ts-expect-error
         teamId: req.data.team.id,
         grading: { gt: 0 },
       },
     });
-    const location = approvedPuzzleSubmissions.length + 1;
+    const location = approvedPuzzleSubmissions + 1;
 
     const pedingSubmission = await prisma.puzzlesubmission.findFirst({
       where: {
@@ -45,9 +45,7 @@ router.post(
     if (pedingSubmission)
       return sendError(
         res,
-        `Your team already submitted a puzzle for location ${
-          location - 1
-        }. Your submition will be graded as soon as possible.`,
+        `Your team already submitted a puzzle for location ${location}. Your submition will be graded as soon as possible.`,
         400
       );
 
@@ -317,11 +315,7 @@ router.get(
           },
           number: submission.number,
           location: submission.location,
-          NOT: {
-            grading: {
-              gt: 0,
-            },
-          },
+          OR: [{ grading: null }, { grading: { gt: 0 } }],
         },
       })) + 1;
 

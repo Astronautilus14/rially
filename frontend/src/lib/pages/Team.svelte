@@ -4,7 +4,9 @@
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
   import { fetchPlusPlus } from "../../stores/dbStore";
-  import { isLoading } from "../../stores/loadingStore";
+  import { isLoading, showError } from "../../stores/loadingStore";
+  import { Pencil } from "svelte-bootstrap-icons";
+  import { toast } from "@zerodevx/svelte-toast";
 
   export let id: string;
   let error = "";
@@ -72,7 +74,45 @@
       }
     );
   }
+    
+  let changeUserNameFocus = null;
+  function handleChangeUsername(newName: string, userId: number, oldName: string, target) {
+    if (!newName || !userId) return;
+
+    fetch(`${settings.api_url}/teams/member`, {
+      method: "PATCH",
+      headers: {
+        Authorization: localStorage.getItem("rially::token"),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId, newName
+      })
+    })
+    .then( async (res) => {
+      if (res.ok) return   toast.push("Succes", {
+        duration: 2000,
+        theme: {
+          "--toastBackground": "#96be25",
+          "--toastColor": "white",
+          "--toastBarBackground": "white",
+        },
+      });
+      if (res.status === 401 || res.status === 403) return navigate("/login", { replace: true });
+      throw new Error((await res.json()).message);
+    })
+    .catch( (error) => {
+      target.value = oldName;
+      showError(error);
+    })
+  }
+
+  function onKeyDown(event) {
+    if (event.key === "Enter" && changeUserNameFocus !== null) handleChangeUsername(changeUserNameFocus.target.value, changeUserNameFocus.id, changeUserNameFocus.old, changeUserNameFocus.target)
+  }
 </script>
+
+<svelte:window on:keydown={onKeyDown} />
 
 <main class="contianer">
   <div class="row justify-content-md-center">
@@ -101,7 +141,25 @@
                     {#each team.members as member}
                       <tr>
                         <td>{member.name}</td>
-                        <td>{member.username}</td>
+                        <td>
+                          <input 
+                            type="text"
+                            name="username"
+                            value={member.username}
+                            class="seamlessInput" 
+
+                            on:blur={(event) => {
+                              changeUserNameFocus = null;
+                              // @ts-expect-error
+                              handleChangeUsername(event.target.username, member.id, member.username, event.target);
+                            }}
+
+                            on:focus={(event) => {
+                              changeUserNameFocus = { target: event.target, id: member.id, old: member.username }
+                            }}
+                          />
+                          <Pencil />
+                        </td>
                         <td>
                           {member.discordId
                             ? member.discordId
@@ -165,3 +223,34 @@
     </div>
   </div>
 </main>
+
+<style lang="scss">
+  th {
+    max-width: 1%;
+    white-space: nowrap;
+  }
+
+  td:has(.seamlessInput) {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    margin: 0;
+    box-shadow: none;
+
+    .seamlessInput {
+      background: none;
+      border: none;
+      outline: none;
+      box-shadow: none;
+      color: var(--bs-body-color);
+      max-width: 17ch;
+  
+      &:hover {
+        text-decoration: underline;
+        color: white
+      }
+    }
+  }
+</style>

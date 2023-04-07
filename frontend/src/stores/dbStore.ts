@@ -8,7 +8,6 @@ let fetchPlusPlus = (url, method?, body?, shouldReload?) => {
   // Own fetch including isLoading, error handling and returning the promise data
   if (url[0] === "/") url = url.slice(1);
 
-  console.log("fethcing ++");
   //   isLoading.set(true);
 
   return new Promise((resolve, reject) => {
@@ -21,7 +20,6 @@ let fetchPlusPlus = (url, method?, body?, shouldReload?) => {
       body: body ? JSON.stringify(body) : undefined,
     })
       .then((res) => {
-        console.log("Got a RESPONSEO");
         if (res.ok) {
           return res.json();
         }
@@ -40,7 +38,6 @@ let fetchPlusPlus = (url, method?, body?, shouldReload?) => {
       })
       .then((data) => {
         // Resolving data
-        console.log("resolving");
         resolve(data);
       })
       .catch((e) => reject(e))

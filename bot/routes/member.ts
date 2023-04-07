@@ -75,4 +75,34 @@ router.post("/", verifyToken, async (req, res) => {
   return res.sendStatus(200);
 });
 
+router.patch("/", verifyToken, async (req, res) => {
+  const { userId, newName }: { userId: string; newName: string } = req.body;
+  if (!userId || !newName)
+    return res.status(400).json({ message: "User ID and New name required" });
+
+  const guild = await getFromCacheOrFetch(
+    client.guilds,
+    process.env.DISCORD_SERVER_ID!
+  );
+  if (!guild)
+    return res.status(500).json({
+      message: "Discord bot broke",
+    });
+
+  const user = await getFromCacheOrFetch(guild.members, userId);
+  if (!user)
+    return res.status(400).json({
+      message: "User not found",
+    });
+
+  try {
+    await user.edit({ nick: newName });
+  } catch (e) {
+    console.error(e);
+    return res.sendStatus(500);
+  }
+
+  return res.sendStatus(200);
+});
+
 export default router;
