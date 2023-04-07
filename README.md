@@ -40,6 +40,12 @@ Slash commands are not like you might know discord bot commands. The layout of t
 npm run register
 ```
 
+## Default admin user
+```
+npx prisma db seed
+```
+This will seed your DB. It makes a admin user and committee team. This way you can login with the username `admin` and password `adminadmin`. It is recommended to change the password to something more secure. You can do so at the settings page. 
+
 ### Old
 
 **Create admin user**
