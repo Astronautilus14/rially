@@ -221,7 +221,7 @@ router.delete(
   async (req, res) => {
     const { userId, newTeamId }: { userId: number; newTeamId?: number } =
       req.body;
-    if (!userId) return sendError(res, "User id is required", 400);
+    if (!userId) return sendError(res, "User ID is required", 400);
 
     // Update db
     let user;

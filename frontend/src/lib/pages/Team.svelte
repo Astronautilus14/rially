@@ -142,6 +142,9 @@
                       <tr>
                         <td>{member.name}</td>
                         <td>
+                          {#if member.name === "admin"}
+                          admin
+                          {:else}
                           <input 
                             type="text"
                             name="username"
@@ -159,6 +162,7 @@
                             }}
                           />
                           <Pencil />
+                          {/if}
                         </td>
                         <td>
                           {member.discordId
@@ -166,7 +170,7 @@
                             : "Not connected"}
                         </td>
                         <td>
-                          {#if !team.isCommittee}
+                          {#if member.username !== "admin"}
                             <button
                               class="delete btn btn-danger"
                               on:click={() => handleMemberDelete(member.id)}

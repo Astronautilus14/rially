@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import prisma, { sendError } from "../database";
+import axios from "axios";
 
 const router = express.Router();
 
@@ -98,6 +99,22 @@ router.post("/register", async (req, res) => {
 
   if (!username) return sendError(res, "Username required", 400);
   if (!name) return sendError(res, "Name required", 400);
+
+  try {
+    await axios.patch(
+      `${process.env.BOT_API_URL!}/member`,
+      {
+        // @ts-expect-error
+        userId: discordId,
+        newName: username,
+      },
+      {
+        headers: { Authorization: process.env.BOT_API_KEY! },
+      }
+    );
+  } catch (error) {
+    console.error(error);
+  }
 
   prisma.user
     .create({
