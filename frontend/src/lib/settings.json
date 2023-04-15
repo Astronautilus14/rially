@@ -1,4 +1,4 @@
 {
-  "api_url": "https://api.rially.nautdevroome.nl",
-  "socketServerUrl": "https://websocket.rially.nautdevroome.nl"
+  "api_url": "http://localhost:8080",
+  "socketServerUrl": "http://localhost:7070"
 }

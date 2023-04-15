@@ -16,17 +16,30 @@ router.get("/public", async (req, res) => {
     return sendError(res, "The leaderboard is currently turned off!", 200);
 
   const teams = await prisma.$queryRaw`
-  SELECT SUM(t.grading) AS score, team.name, team.id
-  FROM (
-    SELECT grading, teamId FROM challangesubmission
+  SELECT * FROM (
+    (
+      SELECT SUM(cs.grading) AS score, team.id, team.name
+      FROM challangesubmission AS cs, team
+      WHERE team.id = cs.teamId
+      GROUP BY team.id
+    )
     UNION
-    SELECT grading, teamId FROM crazy88submission
-    UNION
-    SELECT grading, teamId from puzzlesubmission
-  ) AS t, team
-  WHERE t.teamId = team.id
-  AND team.isCommittee = 0
-  GROUP BY t.teamId
+    (
+      SELECT SUM(crazy.grading) AS score, team.id, team.name
+      FROM crazy88submission AS crazy, team
+      WHERE team.id = crazy.teamId
+      GROUP BY team.id
+    )
+    UNION 
+    (
+      SELECT SUM(ps.grading) AS score, team.id, team.name
+      FROM puzzlesubmission AS ps, team
+      WHERE ps.teamId = team.id
+      GROUP BY team.id
+    )
+  ) AS t
+  GROUP BY t.id
+  ORDER BY t.score DESC;
 `;
   res.json({ teams });
 });
