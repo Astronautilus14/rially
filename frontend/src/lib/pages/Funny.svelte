@@ -30,7 +30,7 @@
   <div class="row justify-content-md-center">
     <div class="col-12 col-sm-10">
       <GlassCard title="Funny submissions">
-        <div class="row row-col-4">
+        <div class="row row-cols-4">
           {#each data as submission}
             <div class="card col mx-2" style="width: 18rem;">
               {#if /.*.(png|jpg|jpeg|gif|webp|avif|apng|bmp)$/i.test(submission?.fileLink)}
