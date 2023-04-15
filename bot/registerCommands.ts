@@ -42,16 +42,15 @@ const commands = [
             .setDescription("Photo or video of your submission")
             .setRequired(true)
         )
-        .addIntegerOption(
-          (option) =>
-            option
-              .setName("number")
-              .setDescription(
-                "The number of the location challange as indicated at the pictures"
-              )
-              .setRequired(true)
-              .setMinValue(1)
-              .setMaxValue(15) // TODO: Dit laten kloppen
+        .addIntegerOption((option) =>
+          option
+            .setName("number")
+            .setDescription(
+              "The number of the location challange as indicated at the pictures"
+            )
+            .setRequired(true)
+            .setMinValue(1)
+            .setMaxValue(50)
         )
     )
 

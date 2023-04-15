@@ -104,6 +104,10 @@ router.post(
         // @ts-expect-error
         teamId: req.data.team.id,
         number,
+        location,
+        NOT: {
+          OR: [{ grading: null }, { grading: 0 }],
+        },
       },
     });
 

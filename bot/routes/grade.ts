@@ -66,7 +66,7 @@ router.post("/", verifyToken, async (req, res) => {
     }`
   );
 
-  if (type !== "puzzle") return res.sendStatus(200);
+  if (type !== "puzzle" || grading <= 0) return res.sendStatus(200);
 
   if (!location)
     return res.status(400).json({
