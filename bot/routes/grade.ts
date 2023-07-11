@@ -3,7 +3,6 @@ import verifyToken from "../utils/verifyToken";
 import { client } from "../index";
 import getFromCacheOrFetch from "../utils/getFromCacheOrFetch";
 import discordjs from "discord.js";
-import { Collection, PermissionOverwrites } from "discord.js";
 
 const router = Router();
 

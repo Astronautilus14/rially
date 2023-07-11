@@ -97,7 +97,11 @@ router.patch("/", verifyToken, async (req, res) => {
 
   try {
     await user.edit({ nick: newName });
-  } catch (e) {
+  } catch (e: any) {
+    if (e.code === 50013) return res.status(403).json({
+      message: "Can not change that user's name because he is a discord admin"
+    })
+
     console.error(e);
     return res.sendStatus(500);
   }

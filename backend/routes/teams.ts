@@ -1,7 +1,8 @@
 import express from "express";
-import prisma, { sendError } from "../database";
+import prisma from "../utils/database";
+import sendError from "../utils/sendError";
 import { isCommittee, teamCheck, tokenCheck } from "./auth";
-import type { Request } from "../types";
+import type { Request } from "../utils/types";
 import axios from "axios";
 
 const router = express.Router();

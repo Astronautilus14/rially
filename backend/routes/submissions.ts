@@ -1,7 +1,12 @@
 import express from "express";
+import axios from "axios";
+
 import type { Response, NextFunction } from "express";
-import type { Request } from "../types";
-import prisma, { sendError } from "../database";
+import type { Request } from "../utils/types";
+
+import prisma from "../utils/database";
+import sendError from "../utils/sendError";
+import io from "../utils/socket";
 import {
   isCommittee,
   teamCheck,
@@ -9,34 +14,33 @@ import {
   checkBotApiKey,
   checkDiscordId,
 } from "./auth";
-import io from "../socket";
-import axios from "axios";
 
 const router = express.Router();
 
+// Method to submit a puzzle
 router.post(
   "/puzzle",
   checkBotApiKey,
   checkDiscordId,
   checkTeam,
-  async (req, res) => {
+  async (req: Request, res) => {
     const { fileLink }: { fileLink: string } = req.body;
     if (!fileLink) return sendError(res, "File link required", 400);
 
-    // Figure out where they are now
-    const approvedPuzzleSubmissions = await prisma.puzzlesubmission.count({
+    // Figure out where they are now by counting the number of approved puzzle submissions + 1
+    // ex: they have 1 approved submission, so they are now looking to submit location 2
+    const location = await prisma.puzzlesubmission.count({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
+        teamId: req.data!.team!.id,
         grading: { gt: 0 },
       },
-    });
-    const location = approvedPuzzleSubmissions + 1;
+    }) + 1;
 
+    // If there is a submission without a grading, this should be graded first
+    // and the team should stop spamming :)
     const pedingSubmission = await prisma.puzzlesubmission.findFirst({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
+        teamId: req.data!.team!.id,
         grading: null,
         location,
       },
@@ -49,12 +53,12 @@ router.post(
         400
       );
 
+    // Create the submission in the database
     let submission;
     try {
       submission = await prisma.puzzlesubmission.create({
         data: {
-          // @ts-expect-error
-          teamId: req.data.team.id,
+          teamId: req.data!.team!.id,
           location,
           fileLink,
         },
@@ -67,30 +71,34 @@ router.post(
     res.json({
       message: `Your submission for puzzle location ${location} has been received. It will be graded soon.`,
     });
+
+    // Emit an event that a new submission is ready to be graded
     io.emit("submission", submission.id, "puzzle");
   }
 );
 
+// Method to submit a (location based) challenge
 router.post(
-  "/challange",
+  "/challenge",
   checkBotApiKey,
   checkDiscordId,
   checkTeam,
-  async (req, res) => {
+  async (req: Request, res) => {
     const { fileLink, number }: { fileLink: string; number: number } = req.body;
     if (!fileLink || !number)
       return sendError(res, "File link and Number required", 400);
 
-    // Figure out where they are now
-    const approvedSubmissions = await prisma.puzzlesubmission.findMany({
+    // Figure out where they are now by counting the number of approved puzzle submissions
+    // ex: if they have 1 approved puzzle submission they are looking to submit challenge for location 1
+    const location = await prisma.puzzlesubmission.count({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
+        teamId: req.data!.team!.id,
         grading: { gt: 0 },
       },
     });
-    const location = approvedSubmissions.length;
 
+    // If the location is 0 they have not found the first location yet and should not
+    // submit a location based challenge
     if (location === 0)
       return sendError(
         res,
@@ -98,26 +106,24 @@ router.post(
         400
       );
 
-    // Figure out weather they already submitted
-    const challangesubmission = await prisma.challangesubmission.findFirst({
+    // If there is a submission without a grading, this should be graded first
+    // Or if the challenge was already approved it can't be submitted in again
+    const challengesubmission = await prisma.challangesubmission.findFirst({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
+        teamId: req.data!.team!.id,
         number,
         location,
-        NOT: {
-          OR: [{ grading: null }, { grading: 0 }],
-        },
+        OR: [{ grading: null }, { grading: { gt: 0 } }],
       },
     });
 
-    if (challangesubmission)
+    if (challengesubmission)
       return sendError(
         res,
         `Your team already submitted a photo or video for challenge ${number} at location ${location}. ${
-          challangesubmission.grading === null
+          challengesubmission.grading === null
             ? "Your submission will be graded as soon as possible."
-            : ""
+            : `It got graded with ${challengesubmission.grading} points.`
         }`,
         400
       );
@@ -126,8 +132,7 @@ router.post(
     try {
       submission = await prisma.challangesubmission.create({
         data: {
-          // @ts-expect-error
-          teamId: req.data.team.id,
+          teamId: req.data!.team!.id,
           location,
           fileLink,
           number,
@@ -150,20 +155,18 @@ router.post(
   checkBotApiKey,
   checkDiscordId,
   checkTeam,
-  async (req, res) => {
+  async (req: Request, res) => {
     const { fileLink, number }: { fileLink: string; number: number } = req.body;
     if (!fileLink || !number)
       return sendError(res, "File link and Number required", 400);
 
-    // Figure out weather they already submitted
+    // If there is a submission without a grading, this should be graded first
+    // Or if the challenge was already approved it can't be submitted in again
     const crazy88submission = await prisma.crazy88submission.findFirst({
       where: {
-        // @ts-expect-error
-        teamId: req.data.team.id,
+        teamId: req.data!.team!.id,
         number,
-        NOT: {
-          OR: [{ grading: null }, { grading: 0 }],
-        },
+        OR: [{ grading: null }, { grading: { gt: 0 } }],
       },
     });
 
@@ -173,7 +176,7 @@ router.post(
         `Your team already submitted a photo or video for crazy 88 task ${number}. ${
           crazy88submission.grading === null
             ? "Your submission will be graded as soon as possible."
-            : ""
+            : `It got graded with ${crazy88submission.grading} points.`
         }`,
         400
       );

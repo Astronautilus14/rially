@@ -1,67 +1,63 @@
 import express from "express";
-import prisma, { sendError } from "../database";
+import prisma from "../utils/database";
+import sendError from "../utils/sendError";
 import { isCommittee, teamCheck, tokenCheck } from "./auth";
 
 const router = express.Router();
 
+// Method to get the public leaderboard
 router.get("/public", async (req, res) => {
-  const isPublic =
-    (await prisma.variables.findUnique({
+  // Check if the leaderboard is set to public
+  if ((await prisma.variables.findUnique({
       where: { key: "publicLeaderboard" },
-    }))!.value === "true"
-      ? true
-      : false;
-
-  if (!isPublic)
+    }))?.value === "true") 
     return sendError(res, "The leaderboard is currently turned off!", 200);
 
-  const teams = await prisma.$queryRaw`
-  SELECT * FROM (
-    (
-      SELECT SUM(cs.grading) AS score, team.id, team.name
-      FROM challangesubmission AS cs, team
-      WHERE team.id = cs.teamId
-      GROUP BY team.id
-    )
-    UNION
-    (
-      SELECT SUM(crazy.grading) AS score, team.id, team.name
-      FROM crazy88submission AS crazy, team
-      WHERE team.id = crazy.teamId
-      GROUP BY team.id
-    )
-    UNION 
-    (
-      SELECT SUM(ps.grading) AS score, team.id, team.name
-      FROM puzzlesubmission AS ps, team
-      WHERE ps.teamId = team.id
-      GROUP BY team.id
-    )
-  ) AS t
-  GROUP BY t.id
-  ORDER BY t.score DESC;
-`;
-  res.json({ teams });
+  res.json({ teams: await getLeaderboard() });
 });
 
+// Method to get the leaderboard as a committee member
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  const teams = await prisma.$queryRaw`
-  SELECT SUM(t.grading) AS score, team.name, team.id
-  FROM (
-    SELECT grading, teamId FROM challangesubmission
-    UNION
-    SELECT grading, teamId FROM crazy88submission
-    UNION
-    SELECT grading, teamId FROM puzzlesubmission
-  ) AS t, team
-  WHERE t.teamId = team.id
-  AND team.isCommittee = 0
-  GROUP BY t.teamId
-  ORDER BY score DESC;
-`;
-  res.json({ teams });
+  res.json({ teams: await getLeaderboard() });  
 });
 
+// Helper function that queries the leaderboard from the database
+async function getLeaderboard() {
+  return await prisma.$queryRaw`
+    SELECT * FROM (
+      (
+        SELECT SUM(cs.grading) AS score, team.id, team.name, team.isCommittee
+        FROM challangesubmission AS cs, team
+        WHERE team.id = cs.teamId
+        GROUP BY team.id
+      )
+      UNION
+      (
+        SELECT SUM(crazy.grading) AS score, team.id, team.name, team.isCommittee
+        FROM crazy88submission AS crazy, team
+        WHERE team.id = crazy.teamId
+        GROUP BY team.id
+      )
+      UNION 
+      (
+        SELECT SUM(ps.grading) AS score, team.id, team.name, team.isCommittee
+        FROM puzzlesubmission AS ps, team
+        WHERE ps.teamId = team.id
+        GROUP BY team.id
+      )
+      UNION
+      (
+        SELECT 0 AS score, team.id, team.name, team.isCommittee
+        FROM team
+      )
+    ) AS t
+    WHERE t.isCommittee = 0
+    GROUP BY t.id
+    ORDER BY t.score DESC;
+  `;
+}
+
+// Method to change the leaderboard between public and private
 router.patch("/", tokenCheck, teamCheck, isCommittee, (req, res) => {
   const { setPublic }: { setPublic: boolean } = req.body;
   if (typeof setPublic !== "boolean")

@@ -10,8 +10,6 @@ const io = new SocketServer(server, {
 let areGrading: { id: number; type: string }[] = [];
 
 io.on("connection", (socket) => {
-  console.log(`Client ${socket.id} connected to the socket server`);
-
   for (const submission of areGrading) {
     socket.emit("grading-started", submission.id, submission.type);
   }

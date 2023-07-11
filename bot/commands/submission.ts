@@ -43,7 +43,7 @@ export default async function (
         const number = interaction.options.getInteger("number", true);
         axios
           .post(
-            `${process.env.API_URL!}/submissions/challange`,
+            `${process.env.API_URL!}/submissions/challenge`,
             {
               fileLink,
               number,
