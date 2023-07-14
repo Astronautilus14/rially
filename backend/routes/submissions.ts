@@ -14,6 +14,7 @@ import {
   checkBotApiKey,
   checkDiscordId,
 } from "./auth";
+import { challengesubmission, crazy88submission, puzzlesubmission } from "@prisma/client";
 
 const router = express.Router();
 
@@ -29,12 +30,7 @@ router.post(
 
     // Figure out where they are now by counting the number of approved puzzle submissions + 1
     // ex: they have 1 approved submission, so they are now looking to submit location 2
-    const location = await prisma.puzzlesubmission.count({
-      where: {
-        teamId: req.data!.team!.id,
-        grading: { gt: 0 },
-      },
-    }) + 1;
+    const location = await getLocation(req.data!.team!.id) + 1
 
     // If there is a submission without a grading, this should be graded first
     // and the team should stop spamming :)
@@ -88,14 +84,7 @@ router.post(
     if (!fileLink || !number)
       return sendError(res, "File link and Number required", 400);
 
-    // Figure out where they are now by counting the number of approved puzzle submissions
-    // ex: if they have 1 approved puzzle submission they are looking to submit challenge for location 1
-    const location = await prisma.puzzlesubmission.count({
-      where: {
-        teamId: req.data!.team!.id,
-        grading: { gt: 0 },
-      },
-    });
+    const location = await getLocation(req.data!.team!.id)
 
     // If the location is 0 they have not found the first location yet and should not
     // submit a location based challenge
@@ -108,7 +97,7 @@ router.post(
 
     // If there is a submission without a grading, this should be graded first
     // Or if the challenge was already approved it can't be submitted in again
-    const challengesubmission = await prisma.challangesubmission.findFirst({
+    const challengesubmission = await prisma.challengesubmission.findFirst({
       where: {
         teamId: req.data!.team!.id,
         number,
@@ -130,7 +119,7 @@ router.post(
 
     let submission;
     try {
-      submission = await prisma.challangesubmission.create({
+      submission = await prisma.challengesubmission.create({
         data: {
           teamId: req.data!.team!.id,
           location,
@@ -146,10 +135,11 @@ router.post(
     res.json({
       message: `Your submission for location challenge ${number} at location ${location} has been received. It will be graded soon.`,
     });
-    io.emit("submission", submission.id, "challange");
+    io.emit("submission", submission.id, "challenge");
   }
 );
 
+// Method to submit a crazy 88 task
 router.post(
   "/crazy88",
   checkBotApiKey,
@@ -185,8 +175,7 @@ router.post(
     try {
       submission = await prisma.crazy88submission.create({
         data: {
-          // @ts-expect-error
-          teamId: req.data.team.id,
+          teamId: req.data!.team!.id,
           fileLink,
           number,
         },
@@ -203,19 +192,33 @@ router.post(
   }
 );
 
+// Helper function used to
+// figure out where a team is now by counting the number of approved puzzle submissions
+// ex: if they have 1 approved puzzle submission they are looking to submit challenge for location 1
+async function getLocation(teamId: number) {
+  return await prisma.puzzlesubmission.count({
+    where: {
+      teamId,
+      grading: { gt: 0 },
+    },
+  });
+}
+
+// Middleware that should be used after chekckDiscordId to check if the user is in a team or not
 function checkTeam(req: Request, res: Response, next: NextFunction) {
   const teamId = req.data?.team?.id;
   if (!teamId) return sendError(res, "You are not in a team yet", 400);
   next();
 }
 
+// Mehtod to get all submission that need to be graded
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const puzzles = prisma.puzzlesubmission.findMany({
     where: {
       grading: null,
     },
   });
-  const challanges = prisma.challangesubmission.findMany({
+  const challenges = prisma.challengesubmission.findMany({
     where: {
       grading: null,
     },
@@ -225,21 +228,18 @@ router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       grading: null,
     },
   });
-  Promise.all([puzzles, challanges, crazy88]).then(
-    ([puzzles, challanges, crazy88]) => {
-      // @ts-expect-error
-      puzzles.map((submission) => (submission.type = "puzzle"));
-      // @ts-expect-error
-      challanges.map((submission) => (submission.type = "challange"));
-      // @ts-expect-error
-      crazy88.map((submission) => (submission.type = "crazy88"));
+
+  // Wait on the database, add a type to each submission and send it to the client
+  Promise.all([puzzles, challenges, crazy88]).then(
+    ([puzzles, challenges, crazy88]) => {
       return res.json({
-        pending: [...puzzles, ...challanges, ...crazy88],
+        pending: addType(puzzles, challenges, crazy88),
       });
     }
   );
 });
 
+// Method to get all graded submissions
 router.get("/past", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const puzzles = prisma.puzzlesubmission.findMany({
     where: {
@@ -249,7 +249,7 @@ router.get("/past", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     },
     include: { team: true },
   });
-  const challanges = prisma.challangesubmission.findMany({
+  const challenges = prisma.challengesubmission.findMany({
     where: {
       NOT: {
         grading: null,
@@ -265,21 +265,26 @@ router.get("/past", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     },
     include: { team: true },
   });
-  Promise.all([puzzles, challanges, crazy88]).then(
-    ([puzzles, challanges, crazy88]) => {
-      // @ts-expect-error
-      puzzles.map((submission) => (submission.type = "puzzle"));
-      // @ts-expect-error
-      challanges.map((submission) => (submission.type = "challange"));
-      // @ts-expect-error
-      crazy88.map((submission) => (submission.type = "crazy88"));
+
+  // Wait on the database, add a type to each submission and send it to the client
+  Promise.all([puzzles, challenges, crazy88]).then(
+    ([puzzles, challenges, crazy88]) => {
       return res.json({
-        pending: [...puzzles, ...challanges, ...crazy88],
+        pending: addType(puzzles, challenges, crazy88),
       });
     }
   );
 });
 
+// Helper function that adds a type property to a submission and returns it in a list
+function addType(puzzles: puzzlesubmission[], challenges: challengesubmission[], crazy88: crazy88submission[]) {
+  puzzles = puzzles.map((submission) => ({...submission, type: "puzzle"}));
+  challenges = challenges.map((submission) => ({...submission, type: "challenge"}));
+  crazy88 = crazy88.map((submission) => ({...submission, type: "crazy88"}));
+  return [...puzzles, ...challenges, ...crazy88]
+}
+
+// Method to get all information about a specific submission
 router.get(
   "/:type/:id",
   tokenCheck,
@@ -290,13 +295,14 @@ router.get(
     const type = req.params.type;
     if (Number.isNaN(id)) return sendError(res, "ID should be a number", 400);
 
+    // Select the right table in the database
     let table;
     switch (type) {
       case "crazy88":
         table = prisma.crazy88submission;
         break;
-      case "challange":
-        table = prisma.challangesubmission;
+      case "challenge":
+        table = prisma.challengesubmission;
         break;
       case "puzzle":
         table = prisma.puzzlesubmission;
@@ -305,6 +311,7 @@ router.get(
         return sendError(res, "Submission type is unkown", 400);
     }
 
+    // Find the submission in the database
     // @ts-expect-error
     const submission = await table.findUnique({
       where: { id },
@@ -313,6 +320,9 @@ router.get(
     if (!submission)
       return sendError(res, "Combination Type and ID is unkown", 404);
 
+    // Count all the penidng or approved submissions of the same type
+    // ex: if a team is the 2nd team to do location challenge 5, their 
+    // 'speedPlace' is 2
     const speedPlace =
       // @ts-expect-error
       (await table.count({
@@ -333,6 +343,7 @@ router.get(
   }
 );
 
+// Method to (re)grade a submission
 router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const {
     type,
@@ -343,13 +354,14 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   if (!type || !id || grading === null || grading === undefined)
     return sendError(res, "Type, Grading and ID required", 400);
 
+  // Select the right table in the database
   let table;
   switch (type) {
     case "crazy88":
       table = prisma.crazy88submission;
       break;
-    case "challange":
-      table = prisma.challangesubmission;
+    case "challenge":
+      table = prisma.challengesubmission;
       break;
     case "puzzle":
       table = prisma.puzzlesubmission;
@@ -358,6 +370,7 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       return sendError(res, "Submission type is unkown", 400);
   }
 
+  // Update the database entry
   // @ts-expect-error
   const submission = await table.update({
     where: { id },
@@ -365,6 +378,7 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     include: { team: true },
   });
 
+  // Send a request to the bot to let the team know their grade
   try {
     await axios.post(
       `${process.env.BOT_API_URL}/grade`,
@@ -384,18 +398,20 @@ router.post("/grade", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    return sendError(res);
+    return sendError(res, "Could not send the grade to the bot, in case the submission was a puzzle: please edit the permssion for the next location channel in the discord server manually. Otherwise the team just did not get notified with their grade.", 500);
   }
 
   return res.sendStatus(200);
 });
 
+// Method to get all submission marked as 'funny'
 router.get("/funny", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  const challange = prisma.challangesubmission.findMany({
+  // Get all entries from database
+  const puzzle = prisma.puzzlesubmission.findMany({
     where: { isFunny: true },
     include: { team: true },
   });
-  const puzzle = prisma.puzzlesubmission.findMany({
+  const challenge = prisma.challengesubmission.findMany({
     where: { isFunny: true },
     include: { team: true },
   });
@@ -404,17 +420,11 @@ router.get("/funny", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     include: { team: true },
   });
 
-  Promise.all([challange, puzzle, crazy88])
-    .then(([challange, puzzle, crazy88]) => {
-      // @ts-expect-error
-      challange.map((s) => (s.type = "challange"));
-      // @ts-expect-error
-      puzzle.map((s) => (s.type = "puzzle"));
-      // @ts-expect-error
-      crazy88.map((s) => (s.type = "crazy88"));
-
-      res.json({
-        submissions: [...challange, ...puzzle, ...crazy88],
+  // Wait on the db, add a type to each submission and send it to the client
+  Promise.all([puzzle, challenge, crazy88])
+    .then(([puzzle, challenge, crazy88]) => {
+      return res.json({
+        submissions: addType(puzzle, challenge, crazy88),
       });
     })
     .catch((e) => {

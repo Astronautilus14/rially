@@ -39,7 +39,7 @@ CREATE TABLE `puzzlesubmission` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `challangesubmission` (
+CREATE TABLE `challengesubmission` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `teamId` INTEGER NOT NULL,
     `fileLink` VARCHAR(191) NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE `challangesubmission` (
     `isFunny` BOOLEAN NOT NULL DEFAULT false,
     `timeSubmitted` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    UNIQUE INDEX `challangesubmission_fileLink_key`(`fileLink`),
+    UNIQUE INDEX `challengesubmission_fileLink_key`(`fileLink`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -82,7 +82,7 @@ ALTER TABLE `user` ADD CONSTRAINT `user_teamId_fkey` FOREIGN KEY (`teamId`) REFE
 ALTER TABLE `puzzlesubmission` ADD CONSTRAINT `puzzlesubmission_teamId_fkey` FOREIGN KEY (`teamId`) REFERENCES `team`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `challangesubmission` ADD CONSTRAINT `challangesubmission_teamId_fkey` FOREIGN KEY (`teamId`) REFERENCES `team`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `challengesubmission` ADD CONSTRAINT `challengesubmission_teamId_fkey` FOREIGN KEY (`teamId`) REFERENCES `team`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `crazy88submission` ADD CONSTRAINT `crazy88submission_teamId_fkey` FOREIGN KEY (`teamId`) REFERENCES `team`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

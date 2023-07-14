@@ -16,7 +16,7 @@ model user {
   discordId String? @unique
   name      String  @default("Unknwown")
   password  String?
-  team      team?   @relation(fields: [teamId], references: [id])
+  team      team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
   teamId    Int?
 }
 
@@ -28,7 +28,7 @@ model team {
   channelId           String?
   roleId              String?
   puzzlesubmission    puzzlesubmission[]
-  challangesubmission challangesubmission[]
+  challangesubmission challengesubmission[]
   crazy88submission   crazy88submission[]
 }
 
@@ -43,7 +43,7 @@ model puzzlesubmission {
   timeSubmitted DateTime @default(now())
 }
 
-model challangesubmission {
+model challengesubmission {
   id            Int      @id @default(autoincrement())
   team          team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId        Int

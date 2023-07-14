@@ -7,12 +7,13 @@ import type discordjs from "discord.js";
 
 const router = Router();
 
-// Delete a team
+// Method to delete a team
 router.delete("/", verifyToken, async (req, res) => {
   const { channelId, roleId } = req.body;
   if (!channelId || !roleId)
     return res.status(400).json({ message: "Channel ID and Role ID required" });
 
+  // Find the guild (discord server)
   const guild = await getFromCacheOrFetch(
     client.guilds,
     process.env.DISCORD_SERVER_ID!
@@ -22,12 +23,14 @@ router.delete("/", verifyToken, async (req, res) => {
       message: "Discord bot broke",
     });
 
+  // Find the team's role
   const role = await getFromCacheOrFetch(guild.roles, roleId);
   if (!role)
     return res.status(400).json({
       message: "Role not found",
     });
 
+  // Find the team's channel
   const channel = await getFromCacheOrFetch(guild.channels, channelId);
   if (!channel) return res.status(400).json({ message: "Channel not found" });
   if (!channel.isTextBased())
@@ -35,9 +38,12 @@ router.delete("/", verifyToken, async (req, res) => {
       .status(400)
       .json({ message: "Channel must be a text based channel" });
 
+  // Delete the role
   const roleDelete = role.delete();
+  // Delete the channel
   const channelDelete = channel.delete();
 
+  // Wait on the discord api
   Promise.all([roleDelete, channelDelete])
     .then(() => res.sendStatus(200))
     .catch((error) => {
@@ -54,6 +60,7 @@ router.post("/", verifyToken, async (req, res) => {
       message: "Name required",
     });
 
+  // Find the guild (discord server)
   const guild = await getFromCacheOrFetch(
     client.guilds,
     process.env.DISCORD_SERVER_ID!
@@ -63,6 +70,7 @@ router.post("/", verifyToken, async (req, res) => {
       message: "Discord bot broke",
     });
 
+  // Select everyone
   const everyone = guild.roles.cache.find(
     (role: any) => role.name === "@everyone"
   );
@@ -100,8 +108,7 @@ router.post("/", verifyToken, async (req, res) => {
   });
 });
 
-// let i = 0;
-// Change team name
+// Method to change a team's name
 router.patch("/", verifyToken, async (req, res) => {
   const {
     roleId,
@@ -113,32 +120,30 @@ router.patch("/", verifyToken, async (req, res) => {
       .status(400)
       .json({ message: "Role ID, Channel ID and New name required" });
 
+  // Find guild (discord server)
   const guild = await getFromCacheOrFetch(
     client.guilds,
     process.env.DISCORD_SERVER_ID!
   );
   if (!guild) return res.status(500).json({ message: "Discord bot broke" });
 
+  // Find team's role
   const role = await getFromCacheOrFetch(guild.roles, roleId);
   if (!role) return res.status(404).json({ message: "Role ID unkown" });
 
+  // Find team's channel
   const channel = await getFromCacheOrFetch(guild.channels, channelId);
   if (!channel?.isTextBased())
     return res.sendStatus(404).json({ message: "Channel ID unkown" });
 
-  // i++;
-  // const localId = i.toString();
-  // console.log(`Created promise id:${localId}`);
-  // const t1 = Date.now();
+  // Update role name
   const changeRoleName = role.setName(newName);
+  // Update channel name
   const changeChannelName = (channel as discordjs.TextChannel).setName(newName);
 
+  // Wait on the discord api
   Promise.all([changeRoleName, changeChannelName])
     .then(() => {
-      // const t2 = Date.now();
-      // console.log(
-      //   `Resolved promise id:${localId} in ${(t2 - t1) / 1000} seconds`
-      // );
       return res.sendStatus(200);
     })
     .catch((error) => {

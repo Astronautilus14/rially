@@ -7,7 +7,7 @@ import axios from "axios";
 
 const router = express.Router();
 
-// Create a new team
+// Method to create a new team
 router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { teamName } = req.body;
   if (!teamName) return sendError(res, "Team name is required", 400);
@@ -27,7 +27,8 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
   if (!team) return sendError(res);
 
-  // Create team in discord
+  // Send a request to the discord bot to create a team
+  // The bot reponds with the newly created channel id and role id
   let discordRes;
   try {
     discordRes = await axios.post(
@@ -43,15 +44,11 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    sendError(res);
-    // If the team in not created in discord, delete it from the db
-    await prisma.team.delete({
-      where: { id: team.id },
-    });
+    sendError(res, "Could not create the channel and/or role in the discord server. Please do so manually", 500);
     return;
   }
 
-  // Set the discord role id and channel id in the db
+  // Update the discord role id and channel id in the database
   await prisma.team.update({
     where: {
       id: team.id,
@@ -61,15 +58,16 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       roleId: discordRes.data.roleId,
     },
   });
+
   res.sendStatus(200);
 });
 
-// Delete a team
+// Method to delete a team
 router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { teamId }: { teamId: number } = req.body;
   if (!teamId) return sendError(res, "Team ID required", 400);
 
-  // Create team in db
+  // Deleate the team from the database
   let team;
   try {
     team = await prisma.team.delete({
@@ -83,9 +81,11 @@ router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
 
   if (!team) return sendError(res, "Team ID not found", 400);
+
+  // If the team is not in the discord server
   if (!team.channelId || !team.roleId) return res.sendStatus(200);
 
-  // Delete team in discord
+  // Send a request to the bot to delete the team in the discord server
   try {
     await axios.delete(`${process.env.BOT_API_URL}/teams`, {
       data: {
@@ -104,10 +104,11 @@ router.delete("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       500
     );
   }
+
   return res.sendStatus(200);
 });
 
-// Change team name
+// Method to change a team name
 router.patch(
   "/",
   tokenCheck,
@@ -117,8 +118,8 @@ router.patch(
     const { newName, teamId } = req.body;
     if (!newName || !teamId)
       return sendError(res, "New name and Team ID are required", 400);
-    if (!req.data?.team?.id) return sendError(res);
 
+    // Update the team name in the data base
     prisma.team
       .update({
         where: {
@@ -128,7 +129,9 @@ router.patch(
           name: newName,
         },
       })
-      .then(async (team) => {
+      .then( async (team) => {
+
+        // Send a request to the bot to change the team name in the discord server
         let hasSent = false;
         try {
           await axios.patch(
@@ -161,7 +164,7 @@ router.patch(
   }
 );
 
-// Add user to team
+// Method to add user to a team
 router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { userId, teamId }: { userId: number; teamId: number } = req.body;
   if (!userId || !teamId)
@@ -186,7 +189,7 @@ router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
   if (!user) return sendError(res, "User ID is now known", 400);
 
-  // Add user to team in discord
+  // Send a request to the bot to add the user to a team in the discord server
   try {
     await axios.post(
       `${process.env.BOT_API_URL}/member`,
@@ -202,18 +205,13 @@ router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    sendError(res, "Could not delete user from team in discord.", 500);
-    await prisma.user.update({
-      where: { id: userId },
-      data: { teamId: null },
-    });
-    return;
+    return sendError(res, "Could not delete user from team in discord. Please do so manually by removing the user's role in the discord server.", 500);
   }
 
   return res.sendStatus(200);
 });
 
-// Delete member from team (unused: or add user to new team)
+// Method to delete member from team (unused: or change a user's team)
 router.delete(
   "/member",
   tokenCheck,
@@ -224,7 +222,7 @@ router.delete(
       req.body;
     if (!userId) return sendError(res, "User ID is required", 400);
 
-    // Update db
+    // Update data base
     let user;
     try {
       user = await prisma.user.update({
@@ -242,7 +240,7 @@ router.delete(
     if (!user) return sendError(res, "User not found", 404);
     if (!user.discordId) return res.sendStatus(200);
 
-    // Update discord
+    // Send a request to the bot to change the role of the user in the discord server
     try {
       await axios.delete(`${process.env.BOT_API_URL}/member`, {
         data: {
@@ -266,7 +264,7 @@ router.delete(
   }
 );
 
-// Change a username
+// Method to change a username
 router.patch(
   "/member",
   tokenCheck,
@@ -277,6 +275,7 @@ router.patch(
     if (!userId || !newName)
       return sendError(res, "User ID and New name required", 400);
 
+    // Update the username in the database
     const user = await prisma.user
       .update({
         where: { id: userId },
@@ -286,9 +285,13 @@ router.patch(
         console.error(error);
         return sendError(res);
       });
+
     if (!user) return sendError(res, "User ID not found", 404);
+
+    // If there is no discord ID, the username will not have to be updated in the discord server
     if (!user.discordId) return res.sendStatus(200);
 
+    // Send a request to the bot to change the user's username in the discord server
     try {
       await axios.patch(
         `${process.env.BOT_API_URL!}/member`,
@@ -311,50 +314,70 @@ router.patch(
   }
 );
 
-// Get all teams
-router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) =>
-  res.json(await prisma.team.findMany())
-);
-
-// Get all users
-router.get("/users", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  res.json(
-    await prisma.user.findMany({ select: { id: true, username: true } })
-  );
+// Method to get all teams
+router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  try {
+    res.json(await prisma.team.findMany());
+  } catch (error) {
+    console.error(error);
+    sendError(res);
+  }
 });
 
-// Get committee team id
+// Method to get all users
+router.get("/users", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  try {
+    res.json(
+      await prisma.user.findMany({ select: { id: true, username: true } })
+    );
+  } catch (error) {
+    console.error(error);
+    sendError(res);
+  }
+});
+
+// Method to get the id of the committee team
 router.get(
   "/committee",
   tokenCheck,
   teamCheck,
   isCommittee,
   async (req, res) => {
-    res.json(
-      await prisma.team.findFirst({
-        where: { isCommittee: true },
-        select: { id: true },
-      })
-    );
+    try {
+      res.json(
+        await prisma.team.findFirst({
+          where: { isCommittee: true },
+          select: { id: true },
+        })
+      );
+    } catch (error) {
+      console.error(error);
+      sendError(res)
+    }
   }
 );
 
-// Get all team + members for public
+// Method to get all team + members for public
 router.get("/:id/public", async (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
-  const data = await prisma.team.findUnique({
-    where: { id },
-    include: {
-      members: {
-        select: { username: true },
+
+  try {
+    res.json(await prisma.team.findUnique({
+      where: { id },
+      include: {
+        members: {
+          select: { username: true },
+        },
       },
-    },
-  });
-  return res.json(data);
+    }));
+  } catch (error) {
+    console.error(error);
+    sendError(res);
+  }
 });
 
-// Get all users who are not yet in a team + list of teams
+// Method to get all users who are not yet in a team + list of teams
 router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   try {
     const users = prisma.user.findMany({
@@ -374,6 +397,7 @@ router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       },
     });
 
+    // Wait on the database and then send the users and teams to the client
     Promise.all([users, teams]).then(([users, teams]) =>
       res.json({ users, teams })
     );
@@ -383,20 +407,25 @@ router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   }
 });
 
-// Get all info about a team and its users
-router.get("/:id", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+// Method to get info about a team and its users
+router.get("/:id", tokenCheck, teamCheck, isCommittee, (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
-  const data = await prisma.team.findUnique({
+
+  prisma.team.findUnique({
     where: { id },
     include: {
       members: {
         select: { username: true, name: true, id: true, discordId: true },
       },
     },
+  }).then( (data) => {
+    if (!data) return res.status(404).json({ message: "ID is not known" });
+    return res.json(data);
+  }).catch( (error) => {
+    console.error(error);
+    sendError(res);
   });
-  if (!data) return res.status(404).json({ message: "ID is not known" });
-  return res.json(data);
 });
 
 export default router;

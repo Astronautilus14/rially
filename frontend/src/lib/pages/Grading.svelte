@@ -11,22 +11,24 @@
   let pending: { id: number; active: boolean; type: string }[] = [];
   let error = "";
 
+  // When a new submission comes in
   socket.on("submission", (id: number, type: string) => {
     let temp: { id: number; active: boolean; type: string }[] = [];
     let pushed = false;
     const newSubmission = { id, type, active: false };
 
     // My fanstic algorithm to put the new submission in the correct place.
-    // The order is puzzle, challange, crazy88 with in each categorie the oldest on top.
-    if (type === "crazy88") return (pending = [...pending, newSubmission]);
+    // The order is puzzle, challenge, crazy88 with in each categorie the oldest on top.
+    // This way when grading you can always click the top one to grade the submission
+    // with the most priority
+    if (newSubmission.type === "crazy88") return (pending = [...pending, newSubmission]);
 
     for (const submission of pending) {
       if (!pushed) {
-        if (type === "puzzle" && submission.type !== "puzzle") {
+        if (newSubmission.type === "puzzle" && submission.type !== "puzzle") {
           pushed = true;
           temp.push(newSubmission);
-        }
-        if (type === "challange" && submission.type === "crazy88") {
+        } else if (newSubmission.type === "challenge" && submission.type === "crazy88") {
           pushed = true;
           temp.push(newSubmission);
         }
@@ -37,22 +39,30 @@
     pending = temp;
   });
 
+  // List that keeps track of submission that have started grading
+  // while the client was still mounting (loading) 
   let toSetActive: { id: number; type: string }[] = [];
+
+  // When the grading of a submission has started (by someone else)
   socket.on("grading-started", (id: number, type: string) => {
     if (mounted) return setActive(id, type);
     toSetActive.push({ id, type });
   });
 
+  // When the grading of a submission is done (by someone else)
   socket.on("grading-finished", (id: number, type: string) => {
     pending = pending.filter(
       (submission) => submission.id !== id && submission.type !== type
     );
   });
 
+  // When someone stopped grading a submission
   socket.on("grading-cancled", (id: number, type: string) => {
     setActive(id, type, false);
   });
 
+  // Helper function that sets a submission to 'active',
+  // meaning someone else is currenty grading that submission
   function setActive(id: number, type: string, value = true) {
     pending = pending.map((submission) => {
       if (submission.id === id && submission.type === type)
@@ -61,27 +71,41 @@
     });
   }
 
+  // Function that triggers when you start grading a submission
   function grade(submission: any) {
+    // If someone else is already grading that submission, return
     if (submission.active) return;
+    // Let everyone know you will start grading
     socket.emit("grading-started", submission.id, submission.type);
+    // Go to the grading page
     navigate(`/submission/${submission.type}/${submission.id}`);
   }
 
+  // When the mounting (loading) is finnished
   onMount(async () => {
+    // Get all submission that are waiting on a grade
     fetch(`${settings.api_url}/submissions`, {
       headers: {
         Authorization: localStorage.getItem("rially::token"),
       },
     })
       .then(async (response) => {
+        // If OK, parse the json
         if (response.ok) return response.json();
+
+        // If not logged in, redirect to the login page
         if (response.status === 403 || response.status === 401)
           return navigate("/login", { replace: true });
+
         throw new Error((await response.json()).message);
       })
       .then((data) => {
+        // Add the submission to the list of pending submissions
+        // There might already be some submissions in that list if
+        // They came in while loading
         pending = [...pending, ...data.pending];
         mounted = true;
+        // Set all the submission that are currently being graded to 'active'
         for (const submission of toSetActive) {
           setActive(submission.id, submission.type);
         }
