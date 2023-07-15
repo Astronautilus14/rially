@@ -95,31 +95,33 @@ export default async function (
               return interaction.reply(error.response.data.message);
             console.error(error);
             interaction.reply(
-              "Something went wrong. Please contact the committee"
+              "Something went wrong. Please contact the committee."
             );
           });
       }
       break;
     default:
       interaction.reply(
-        "Something went wrong. Type is unkown! Please contact the committee"
+        "Something went wrong. Type is unkown! Please contact the committee."
       );
   }
 }
 
 async function checkMedia(interaction: discordjs.ChatInputCommandInteraction) {
   let media: string | null = null;
+
   try {
     media = interaction.options.getAttachment("media", true)?.url;
   } catch (error) {
     console.error(error);
   }
-  if (!media) return null;
 
-  if (/.*.(png|jpg|jpeg|gif|webp|avif|apng|bmp|mp4|ogg|webm)$/i.test(media))
-    return media;
-  await interaction.reply(
-    "That media type is not supported. Please use one of the following file types: png, jpg, jpeg, gif, webp, avif, apng, bmp, mp4, ogg or webm"
-  );
-  return null;
+  if (!media) {
+    await interaction.reply(
+      "Could not get the attachment! Please contact the committee."
+    );
+    return null;
+  }
+
+  return media;
 }

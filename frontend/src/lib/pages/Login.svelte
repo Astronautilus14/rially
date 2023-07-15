@@ -7,14 +7,14 @@
   let loading = false;
 
   function handelSubmit(event) {
-    if (loading) return;
-    const data = new FormData(event.target);
-    const username = data.get("username");
-    const password = data.get("password");
-    if (!username || !password) return;
+    if (loading) return; // If form is currently loading, return
+    const data = new FormData(event.target); // Retrieve form data
+    const username = data.get("username"); // Get value of username field
+    const password = data.get("password"); // Get value of password field
+    if (!username || !password) return; // If username or password is missing, return early
 
-    loading = true;
-    fetch(`${settings.api_url}/auth/login`, {
+    loading = true; // Set loading to true
+    fetch(`${settings.api_url}/auth/login`, { // Make a POST request to login endpoint
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,22 +24,22 @@
         password,
       }),
     })
-      .then((res) => {
-        if (res.ok) return res.json();
-        return Promise.reject(res);
-      })
-      .then((data) => {
-        localStorage.setItem("rially::token", data.token);
-        isLoggedIn.set(true);
-        navigate("/grading", { replace: true });
-      })
-      .catch( async (res) => {
-        console.log(res);
-        alert((await res.json()).message);
-      })
-      .finally(() => {
-        loading = false;
-      })
+    .then((res) => {
+      if (res.ok) return res.json(); // If response is successful, parse JSON data
+      return Promise.reject(res); // Otherwise, reject the promise
+    })
+    .then((data) => {
+      localStorage.setItem("rially::token", data.token); // Store token in local storage
+      isLoggedIn.set(true); // Set the isLoggedIn store to true
+      navigate("/grading", { replace: true }); // Navigate to the "/grading" page
+    })
+    .catch(async (res) => {
+      console.error(res); // Log the error response
+      alert((await res.json()).message); // Display an alert with the error message
+    })
+    .finally(() => {
+      loading = false; // Set loading back to false
+    });
   }
 </script>
 

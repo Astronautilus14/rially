@@ -9,25 +9,31 @@
   export let id: string;
   export let type: string;
 
-  const socket = io(settings.socketServerUrl)
+  const socket = io(settings.socketServerUrl); // Initialize Socket.IO client
 
-  let submission;
-  let loading = true;
-  let error = "";
-  let isFunny = false;
-  let isGraded = false;
-  let speedPlace: number;
+  let submission; // Variable to store the submission data
+  let loading = true; // Flag to track if data is loading
+  let error = ""; // Variable to store error messages
+  let isFunny = false; // Flag to track if submission is funny
+  let isGraded = false; // Flag to track if submission is graded
+  let speedPlace: number; // Variable to store speed place (1st, 2nd...)
 
   onMount(async () => {
+    // Perform actions when component is mounted
     fetch(`${settings.api_url}/submissions/${type}/${id}`, {
       headers: {
         Authorization: localStorage.getItem("rially::token"),
       },
     })
       .then(async (res) => {
+        // If the response is successful, parse the body
         if (res.ok) return res.json();
+
+        // If the response status is 401 (Unauthorized) or 403 (Forbidden), navigate to the login page
         if (res.status === 401 || res.status === 403)
           return navigate("/login", { replace: true });
+
+        // If there is an error, store the error message
         error = (await res.json()).message;
       })
       .then((data) => {
@@ -40,7 +46,8 @@
   });
 
   function grade(score: number) {
-    if(loading) return;
+    // If the user grade request is already being processed, return
+    if (loading) return;
     loading = true;
 
     fetch(`${settings.api_url}/submissions/grade`, {
@@ -57,8 +64,10 @@
       }),
     })
       .then(() => {
+        // Send to the other user's that you finished grading this submission
         socket.emit("grading-finished", submission.id, submission.type);
         isGraded = true;
+        // Navigate back to the grading page
         navigate("/grading", { replace: true });
       })
       .catch((e) => (error = e))
@@ -72,9 +81,12 @@
     grade(score);
   }
 
+  // When the page is destroyed (closed)
   onDestroy(() => {
-    if (isGraded) return;
-    socket.emit("grading-cancled", submission.id, type);
+    // If the grading is finished, return
+    if (isGraded) return; 
+    // Let the other clients know you stopped grading
+    socket.emit("grading-canceled", submission.id, type);
   });
 </script>
 
@@ -86,9 +98,12 @@
           {#if loading}
             <p>Loading...</p>
           {:else}
+            <!-- If there is an error -->
             {#if error}
+            <!-- Display the error -->
               <p class="error">{error}</p>
             {/if}
+
             <div class="col-md-3 col-6">
               {#if submission?.location}
                 <p>Location: {submission?.location}</p>

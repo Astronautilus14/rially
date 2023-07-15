@@ -4,7 +4,6 @@
   import { Link, navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
 
-  //   let subs: { id: number; active: boolean; type: string }[] = [];
   let subs = [];
   let error = "";
 

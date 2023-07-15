@@ -6,14 +6,16 @@
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
 
-  let data;
-  let error = "";
-  let isPublic = true;
+  let data;  // Stores the fetched leaderboard data
+  let error = "";  // Stores any error message
+  let isPublic = true;  // Flag indicating if the leaderboard is public or not
 
   onMount(async () => {
-    isLoading.set(true);
-    await fetchStanding();
-    isLoading.set(false);
+    isLoading.set(true);  // Set the loading state to true
+    await fetchStanding();  // Fetch the initial leaderboard data
+    isLoading.set(false);  // Set the loading state to false after fetching
+
+    // Fetch the standing every 2 minutes
     setInterval(fetchStanding, 2 * 60 * 1000);
   });
 
@@ -24,25 +26,25 @@
       },
     })
       .then(async (res) => {
-        if (res.ok) return res.json();
-        throw new Error((await res.json()).message);
+        if (res.ok) return res.json();  // If response is successful, parse JSON
+        throw new Error((await res.json()).message);  // If there's an error, throw an error with the message
       })
       .then((body) => {
-        error = body.message;
+        error = body.message;  // Store the error message, if any
         if (error) return;
         let teamsdata = body.teams;
         teamsdata.sort((a, b) => b.score - a.score);
 
-        data = teamsdata;
-        isPublic = body.isPublic ?? true;
+        data = teamsdata;  // Store the fetched leaderboard data
+        isPublic = body.isPublic ?? true;  // Update the isPublic flag from the response
       })
-      .catch((e) => (error = e));
+      .catch((e) => (error = e));  // Catch any error and store it in the error variable
   }
 
   function handlePublicSwitch() {
-    if ($isLoading) return;
-    isPublic = !isPublic;
-    isLoading.set(true);
+    if ($isLoading) return;  // If loading state is true, return (prevent simultaneous requests)
+    isPublic = !isPublic;  // Toggle the isPublic flag
+    isLoading.set(true);  // Set the loading state to true
     fetch(`${settings.api_url}/leaderboard`, {
       method: "PATCH",
       headers: {
@@ -54,14 +56,14 @@
       }),
     })
       .then(async (res) => {
-        if (res.ok) return;
-        throw new Error((await res.json()).message);
+        if (res.ok) return;  // If response is successful, continue
+        throw new Error((await res.json()).message);  // If there's an error, throw an error with the message
       })
       .catch((e) => {
-        error = e;
-        isPublic = !isPublic;
+        error = e;  // Store the error message, if any
+        isPublic = !isPublic;  // Revert the isPublic flag to its previous state
       })
-      .then(() => isLoading.set(false));
+      .then(() => isLoading.set(false));  // Set the loading state to false after the request is complete
   }
 </script>
 
@@ -70,13 +72,15 @@
     <div class="col-12 col-sm-10">
       <GlassCard title="Leaderboard">
         {#if error}
-          <p class="error">{error}</p>
+          <p class="error">{error}</p>  <!-- Display error message if there is one -->
         {/if}
         {#if $isLoggedIn}
           <div class="mb-5">
             <h3>Public leaderboard</h3>
             <label class="switch">
-              <input
+              <!-- Two-way binding with the isPublic flag -->
+              <!-- Call the handlePublicSwitch function on click -->
+              <input 
                 type="checkbox"
                 bind:checked={isPublic}
                 on:click={handlePublicSwitch}
@@ -97,11 +101,12 @@
             <tbody>
               {#each data as team, i}
                 <tr>
-                  <td>{i + 1}</td>
+                  <td>{i + 1}</td>  <!-- Display the place number -->
                   <td>
+                    <!-- Display team name with a link to their public team page -->
                     <Link to={`/teams/${team.id}/public`}>{team.name}</Link>
                   </td>
-                  <td>{team.score}</td>
+                  <td>{team.score}</td>  <!-- Display team score -->
                 </tr>
               {/each}
             </tbody>
@@ -111,66 +116,3 @@
     </div>
   </div>
 </main>
-
-<style>
-  /* W3 schools copy pasta */
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 34px;
-  }
-
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    -webkit-transition: 0.4s;
-    transition: 0.4s;
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    -webkit-transition: 0.4s;
-    transition: 0.4s;
-  }
-
-  input:checked + .slider {
-    background-color: #720acc;
-  }
-
-  input:focus + .slider {
-    box-shadow: 0 0 1px #720acc;
-  }
-
-  input:checked + .slider:before {
-    -webkit-transform: translateX(26px);
-    -ms-transform: translateX(26px);
-    transform: translateX(26px);
-  }
-
-  /* Rounded sliders */
-  .slider.round {
-    border-radius: 34px;
-  }
-
-  .slider.round:before {
-    border-radius: 50%;
-  }
-</style>

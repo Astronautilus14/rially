@@ -4,96 +4,121 @@
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
 
-  let users = [];
-  let readNote = false;
-  let committeeId: number;
-  let error = "";
+  let users: {id: number, username: string}[] = []; // List to store all users
+  let readNote = false; // Flag to track if the warning note has been read
+  let committeeId: number; // Variable to store the committee ID
+  let error = ""; // Variable to store any potential error messages
 
-  onMount( () => {
+  onMount(() => {
     fetch(`${settings.api_url}/teams/users`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token")
-      }
+        Authorization: localStorage.getItem("rially::token"),
+      },
     })
-    .then( async (res) => {
-      if (res.ok) return users = await res.json();
-      if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
-      error = (await res.json()).message;
-    });
+      .then(async (res) => {
+        // If the response is successful, store the user data in the 'users' list
+        if (res.ok) return (users = await res.json());
+
+        // If the response status is 401 (Unauthorized) or 403 (Forbidden), navigate to the login page
+        if (res.status === 401 || res.status === 403)
+          return navigate("/login", { replace: true });
+        
+          // If there is an error, store the error message
+        error = (await res.json()).message;
+      });
 
     fetch(`${settings.api_url}/teams/committee`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token")
-      }
+        Authorization: localStorage.getItem("rially::token"),
+      },
     })
-    .then( async (res) => {
-      if (res.ok) return committeeId = (await res.json()).id;
-      if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
-      error = (await res.json()).message;
-    })
-    .catch((e) => error = e)
-    .finally(() => changePassLoading = false);
-  })
-  
-  let changePassLoading = false;
-  function handleChangePassword(event: any) {
-    if (changePassLoading) return;
-    const data = new FormData(event.target);
-    const oldPassword = data.get("oldPassword");
-    const newPassword = data.get("newPassword");
-    if (!oldPassword || !newPassword) return;
+      .then(async (res) => {
+        // If the response is successful, store the committee ID
+        if (res.ok) return (committeeId = (await res.json()).id);
 
-    changePassLoading = true;
+        // If the response status is 401 (Unauthorized) or 403 (Forbidden), navigate to the login page
+        if (res.status === 401 || res.status === 403)
+          return navigate("/login", { replace: true });
+
+        // If there is an error, store the error message
+        error = (await res.json()).message;
+      })
+      .catch((e) => (error = e))
+      .finally(() => (changePassLoading = false));
+  });
+
+  let changePassLoading = false; // Flag to track if the password change request is being processed
+  function handleChangePassword(event: any) {
+    if (changePassLoading) return; // If the password change request is already being processed, return
+    const data = new FormData(event.target); // Get form data from the event target
+    const oldPassword = data.get("oldPassword"); // Get the old password from the form data
+    const newPassword = data.get("newPassword"); // Get the new password from the form data
+    if (!oldPassword || !newPassword) return; // If either the old password or new password is missing, return
+
+    changePassLoading = true; // Set the loading state to true
     fetch(`${settings.api_url}/auth/changepassword`, {
       method: "POST",
       headers: {
         Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         oldPassword,
-        newPassword
+        newPassword,
+      }),
+    })
+      .then(async (res) => {
+        // If the response is successful, navigate to the homepage
+        if (res.ok) return navigate("/", { replace: true });
+
+        // If the response status is 401 (Unauthorized) or 403 (Forbidden), navigate to the login page
+        if (res.status === 401 || res.status === 403)
+          return navigate("/login", { replace: true });
+
+        // Throw an error with the error message from the response
+        throw new Error((await res.json()).message);
       })
-    })
-    .then( async (res) => {
-      if (res.ok) return navigate("/", {replace: true});
-      if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
-      throw new Error((await res.json()).message);
-    })
-    .catch((e) => error = e);
+      // Update the error variable if an error is thrown
+      .catch((e) => (error = e));
   }
 
-  let addUserLoading = false;
-  let addUserSucces = false;
+  let addUserLoading = false; // Flag to track if the user addition request is being processed
+  let addUserSucces = false; // Flag to track if the user addition is successful
   function handleAddUserToCommittee(event: any) {
-    if (addUserLoading) return;
-    addUserSucces = false;
-    const data = new FormData(event.target);
-    const id = Number(data.get("user"));
-    if (Number.isNaN(id) || addUserLoading) return;
+    if (addUserLoading) return; // If the user addition request is already being processed, return
+    addUserSucces = false; // Reset the success flag
+    const data = new FormData(event.target); // Get form data from the event target
+    const id = Number(data.get("user")); // Get the selected user ID from the form data
+    if (Number.isNaN(id) || addUserLoading) return; // If the ID is not a number or the user addition request is already being processed, return
 
-    addUserLoading = true;
+    addUserLoading = true; // Set the loading state to true
     fetch(`${settings.api_url}/teams/member`, {
       method: "DELETE",
       headers: {
         Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         userId: id,
         newTeamId: committeeId,
+      }),
+    })
+      .then(async (res) => {
+        // If the response is successful, set the success flag to true
+        if (res.ok) return (addUserSucces = true);
+        
+        // If the response status is 401 (Unauthorized) or 403 (Forbidden), navigate to the login page
+        if (res.status === 401 || res.status === 403)
+          return navigate("/login", { replace: true });
+
+        // If there is an error, store the error message
+        error = (await res.json()).message; 
       })
-    })
-    .then( async (res) => {
-      if (res.ok) return addUserSucces = true;
-      if (res.status === 401 || res.status === 403) return navigate("/login", {replace: true});
-      error = (await res.json()).message;
-    })
-    .catch((e) => error = e)
-    .finally(() => {
-      addUserLoading = false;
-      readNote = false;
-    })
+      .catch((e) => (error = e))
+      .finally(() => {
+        addUserLoading = false; // Set the loading state to false
+        readNote = false; // Reset the readNote flag
+      });
   }
 </script>
 
@@ -155,6 +180,6 @@
   }
 
   .success {
-    color: limegreen
+    color: limegreen;
   }
 </style>

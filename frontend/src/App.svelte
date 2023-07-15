@@ -1,7 +1,10 @@
 <script lang="ts">
   import { Router, Link, Route, navigate } from "svelte-routing";
+  import { GearFill } from "svelte-bootstrap-icons";
+  import { SvelteToast } from "@zerodevx/svelte-toast";
   import { isLoggedIn } from "./stores/accountStore";
 
+  // Pages
   import Register from "./lib/pages/Register.svelte";
   import Home from "./lib/pages/Home.svelte";
   import Grading from "./lib/pages/Grading.svelte";
@@ -13,8 +16,6 @@
   import Funny from "./lib/pages/Funny.svelte";
   import Leaderboard from "./lib/pages/Leaderboard.svelte";
   import PublicTeam from "./lib/pages/PublicTeam.svelte";
-  import { GearFill } from "svelte-bootstrap-icons";
-  import { SvelteToast } from "@zerodevx/svelte-toast";
 
   // Import our custom CSS
   import "./scss/styles.scss";

@@ -27,7 +27,7 @@ async function getLeaderboard() {
     SELECT * FROM (
       (
         SELECT SUM(cs.grading) AS score, team.id, team.name, team.isCommittee
-        FROM challangesubmission AS cs, team
+        FROM challengesubmission AS cs, team
         WHERE team.id = cs.teamId
         GROUP BY team.id
       )

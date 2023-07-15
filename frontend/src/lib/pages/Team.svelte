@@ -7,21 +7,29 @@
   import { isLoading, showError } from "../../stores/loadingStore";
   import { Pencil } from "svelte-bootstrap-icons";
   import { toast } from "@zerodevx/svelte-toast";
+  import type { Team } from "../types";
 
-  export let id: string;
-  let error = "";
+  export let id: string; // Team's ID from the URL
+  let error = ""; // Variable to store any potential error messages
 
-  let team;
+  let team: Team; // Data about the team
+
+  // When the component is mounted
   onMount(() => {
-    fetchPlusPlus(`/teams/${id}`).then((data) => {
+    // Fetch data about the team
+    fetchPlusPlus(`/teams/${id}`).then((data: Team) => {
       team = data;
     });
   });
 
+  // Flag that indicates if a delete request is loading
   let loadingTeamDelete = false;
   function handleTeamDelete() {
+    // If the user delete request is already being processed, return
     if (loadingTeamDelete) return;
     loadingTeamDelete = true;
+
+    // Make a request to delete the team
     fetch(`${settings.api_url}/teams`, {
       headers: {
         Authorization: localStorage.getItem("rially::token"),
@@ -32,24 +40,34 @@
         teamId: team.id,
       }),
     })
-      .then((res) => {
+      .then(async (res) => {
+        // If the response is successful
         if (res.ok) {
+          // Navigate back to the teams page
           navigate("/teams", { replace: true });
           return;
         }
-        res.json().then((data) => (error = data.message));
+
+        // If an error occurred, throw the error with the error message
+        throw new Error((await res.json()).message);
       })
+      // If an error occurred, set the error message
       .catch((e) => {
         error = e;
       })
       .finally(() => (loadingTeamDelete = false));
   }
 
-  let loadingMemberDeletes = {};
+  // Key-Value pair that keeps track of loading state of member delete requests
+  let loadingMemberDeletes: { [key: number]: boolean } = {};
   function handleMemberDelete(id: number) {
+    // If the user delete request is already being processed, return
     if (loadingMemberDeletes[id]) return;
     loadingMemberDeletes[id] = true;
+
+    // Make a request to delete a user from a team
     fetchPlusPlus("/teams/member", "DELETE", { userId: id }).finally(() => {
+      // Remove the member from the team's member list
       team.members = team.members.filter((member) => member.id !== id);
       loadingMemberDeletes[id] = false;
       delete loadingMemberDeletes[id];
@@ -58,57 +76,66 @@
   }
 
   let loadingChangeName = false;
-  async function handleChangeName(event) {
+  async function handleChangeName(event: any) {
     if (loadingChangeName) return;
+
     const data = new FormData(event.target);
     const newName = data.get("newName");
-    if (!newName) return;
+    if (typeof newName !== "string") return;
 
     loadingChangeName = true;
-    console.log("Changing name");
-    fetchPlusPlus("/teams", "PATCH", { newName, teamId: team.id }).finally(
-      () => {
+    fetchPlusPlus("/teams", "PATCH", { newName, teamId: team.id })
+      .finally(() => {
+        // Update the team's name with the new name
         team.name = newName;
         loadingChangeName = false;
         error = "";
-      }
-    );
+      });
   }
-    
-  let changeUserNameFocus = null;
-  function handleChangeUsername(newName: string, userId: number, oldName: string, target) {
+
+  let changeUserNameFocus: { target: any; id: number; old: string } = null;
+  function handleChangeUsername(newName: string, userId: number, oldName: string, target: any) {
     if (!newName || !userId) return;
 
     fetch(`${settings.api_url}/teams/member`, {
       method: "PATCH",
       headers: {
         Authorization: localStorage.getItem("rially::token"),
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userId, newName
+        userId,
+        newName,
+      }),
+    })
+      .then(async (res) => {
+        if (res.ok)
+          return toast.push("Succes", {
+            duration: 2000,
+            theme: {
+              "--toastBackground": "#96be25",
+              "--toastColor": "white",
+              "--toastBarBackground": "white",
+            },
+          });
+        if (res.status === 401 || res.status === 403)
+          return navigate("/login", { replace: true });
+        throw new Error((await res.json()).message);
       })
-    })
-    .then( async (res) => {
-      if (res.ok) return   toast.push("Succes", {
-        duration: 2000,
-        theme: {
-          "--toastBackground": "#96be25",
-          "--toastColor": "white",
-          "--toastBarBackground": "white",
-        },
+      .catch((error) => {
+        target.value = oldName;
+        showError(error);
       });
-      if (res.status === 401 || res.status === 403) return navigate("/login", { replace: true });
-      throw new Error((await res.json()).message);
-    })
-    .catch( (error) => {
-      target.value = oldName;
-      showError(error);
-    })
   }
 
-  function onKeyDown(event) {
-    if (event.key === "Enter" && changeUserNameFocus !== null) handleChangeUsername(changeUserNameFocus.target.value, changeUserNameFocus.id, changeUserNameFocus.old, changeUserNameFocus.target)
+  function onKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" && changeUserNameFocus !== null)
+      handleChangeUsername(
+        changeUserNameFocus.target.value,
+        changeUserNameFocus.id,
+        changeUserNameFocus.old,
+        changeUserNameFocus.target
+      );
   }
 </script>
 
@@ -145,11 +172,11 @@
                           {#if member.name === "admin"}
                           admin
                           {:else}
-                          <input 
+                          <input
                             type="text"
                             name="username"
                             value={member.username}
-                            class="seamlessInput" 
+                            class="seamlessInput"
 
                             on:blur={(event) => {
                               changeUserNameFocus = null;
@@ -158,16 +185,14 @@
                             }}
 
                             on:focus={(event) => {
-                              changeUserNameFocus = { target: event.target, id: member.id, old: member.username }
+                              changeUserNameFocus = { target: event.target, id: member.id, old: member.username };
                             }}
                           />
                           <Pencil />
                           {/if}
                         </td>
                         <td>
-                          {member.discordId
-                            ? member.discordId
-                            : "Not connected"}
+                          {member.discordId ? member.discordId : "Not connected"}
                         </td>
                         <td>
                           {#if member.username !== "admin"}
@@ -215,8 +240,8 @@
               </form>
               {#if !team.isCommittee}
                 <button class="btn btn-danger" on:click={handleTeamDelete}>
-                  Delete team</button
-                >
+                  Delete team
+                </button>
               {/if}
             </div>
           </div>
@@ -250,10 +275,10 @@
       box-shadow: none;
       color: var(--bs-body-color);
       max-width: 17ch;
-  
+
       &:hover {
         text-decoration: underline;
-        color: white
+        color: white;
       }
     }
   }

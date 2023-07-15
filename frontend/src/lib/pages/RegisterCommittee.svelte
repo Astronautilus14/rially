@@ -5,17 +5,17 @@
   import settings from "../settings.json";
   import { Link } from "svelte-routing";
 
-  let loading = false;
-  let error = "";
+  let loading = false; // Flag to track if the form is being submitted
+  let error = ""; // Variable to store any potential error messages
 
   const registerSubmit = (event) => {
-    if (loading) return;
-    loading = true;
-    error = "";
-    const data = new FormData(event.target);
-    const username = data.get("username");
-    const name = data.get("name");
-    const password = data.get("password");
+    if (loading) return; // If the form is already being submitted, return and prevent duplicate submissions
+    loading = true; // Set the loading state to true
+    error = ""; // Clear any previous error messages
+    const data = new FormData(event.target); // Get form data from the event target
+    const username = data.get("username"); // Get the username from the form data
+    const name = data.get("name"); // Get the name from the form data
+    const password = data.get("password"); // Get the password from the form data
 
     fetch(`${settings.api_url}/auth/registerCommittee`, {
       method: "POST",
@@ -29,16 +29,16 @@
       }),
     })
       .then(async (res) => {
-        if (res.ok) return res.json();
-        else error = (await res.json()).message;
-        loading = false;
+        if (res.ok) return res.json(); // If the response is successful, return the JSON data
+        else error = (await res.json()).message; // If there is an error, store the error message
+        loading = false; // Set the loading state to false
       })
       .then(data => {
-        localStorage.setItem("rially::token", data.token);
-        navigate("/", {replace: true});
+        localStorage.setItem("rially::token", data.token); // Store the received token in local storage
+        navigate("/", {replace: true}); // Navigate to the homepage
       })
       .catch((e) => {
-        error = e;
+        error = e; // Catch any errors that occur during the fetch request and store the error message
       });
   };
 </script>
@@ -80,6 +80,7 @@
           </div>
 
           <div class="mb-3">
+            <!-- Display different text on the button based on the loading state -->
             <input
               type="submit"
               class="btn btn-primary btn-lg"
@@ -87,10 +88,12 @@
             />
           </div>
         </form>
-        {#if error}
-          <p class="error">{error}</p>
+
+        {#if error} <!-- If there is an error message -->
+          <p class="error">{error}</p> <!-- Display the error message -->
         {/if}
-        <Link to="/login">Already registered? Login here!</Link>
+
+        <Link to="/login">Already registered? Login here!</Link> <!-- Link to the login page -->
       </GlassCard>
     </div>
   </div>

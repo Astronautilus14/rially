@@ -1,21 +1,18 @@
 import { writable } from "svelte/store";
-import { readable } from "svelte/store";
 import settings from "../lib/settings.json";
 
 let isLoggedIn = writable(!!localStorage.getItem("rially::token"));
 
-let verifyToken = async (t?) => {
-  if (!t) t = localStorage.getItem("rially::token");
-  if (!t) return false;
+let verifyToken = async (token?: string) => {
+  if (!token) token = localStorage.getItem("rially::token");
+  if (!token) return false;
 
   return fetch(`${settings.api_url}/auth/verifytoken`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      token: t,
-    }),
+    body: JSON.stringify({ token, }),
   })
     .then((res) => {
       if (res.ok) return res.json();

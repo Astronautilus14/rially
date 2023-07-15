@@ -317,10 +317,10 @@ router.patch(
 // Method to get all teams
 router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   try {
-    res.json(await prisma.team.findMany());
+    return res.json(await prisma.team.findMany());
   } catch (error) {
     console.error(error);
-    sendError(res);
+    return sendError(res);
   }
 });
 
