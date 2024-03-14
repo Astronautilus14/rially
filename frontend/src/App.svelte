@@ -64,26 +64,65 @@
     </nav>
   {/if}
   <div data-bs-theme="dark" class="content">
-    <Route path="register/committee" component={RegisterCommittee} />
-    <Route path="register" component={Register} />
-    <Route path="grading" component={Grading} />
-    <Route path="login" component={Login} />
-    <Route path="submission/:type/:id" let:params>
-      <Submission id={params.id} type={params.type} />
+    <Route path="register/committee">
+      <RegisterCommittee />
     </Route>
-    <Route path="people" component={People} />
-    <Route path="teams" component={Teams} />
+
+    <Route path="register">
+      <Register />
+    </Route>
+
+    <Route path="grading">
+      <Grading />
+    </Route>
+    
+    <Route path="login">
+      <Login />
+    </Route>
+
+    <Route path="submission/:slug/:id" let:params>
+      <Submission id={params.id} />
+    </Route>
+
+    <Route path="people">
+      <People />
+    </Route>
+
+    <Route path="teams">
+      <Teams />
+    </Route>
+
     <Route path="teams/:id" let:params>
       <Team id={params.id} />
     </Route>
+
     <Route path="teams/:id/public" let:params>
       <PublicTeam id={params.id} />
     </Route>
-    <Route path="funny" component={Funny} />
-    <Route path="leaderboard" component={Leaderboard} />
-    <Route path="settings" component={Settings} />
-    <Route path="pastsubmissions" component={PastSubmissions} />
-    <Route path="/" component={Home} />
+
+    <Route path="funny">
+      <Funny />
+    </Route>
+
+    <Route path="leaderboard">
+      <Leaderboard />
+    </Route>
+
+    <Route path="settings">
+      <Settings />
+    </Route>
+
+    <Route path="pastsubmissions">
+      <PastSubmissions />
+    </Route>
+    
+    <Route path="/">
+      <Home />
+    </Route>
+
+    <Route default>
+      <h1 class="text-center">Not found</h1>
+    </Route>
   </div>
 </Router>
 
@@ -98,5 +137,9 @@
     display: flex;
     gap: 5px;
     color: white;
+  }
+
+  h1 {
+    margin-top: 25px;
   }
 </style>

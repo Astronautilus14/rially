@@ -77,7 +77,11 @@
   }
 
   // Function that triggers when you start grading a submission
-  function grade(submission: any) {
+  function grade(submission: {
+    type: string;
+    id: number;
+    active: boolean
+  }) {
     // If someone else is already grading that submission, return
     if (submission.active) return;
     // Let everyone know you will start grading
@@ -141,12 +145,12 @@
               <div>
                 <!-- Display the type of submission as a badge -->
                 <span class="badge bg-secondary">
-                  {submission.type} submission
+                  {submission.type.toLowerCase()} submission
                 </span>
                 <!-- Allow grading if the submission is not active -->
                 <button
-                  class={(submission.active ? "unclickable" : "") +
-                    " btn btn-primary"}
+                  class={(submission.active ? "unclickable bg-secondary" : "") +
+                    " btn btn-primary mx-2"}
                   on:click={() => {
                     grade(submission);
                   }}
@@ -161,3 +165,12 @@
     </div>
   </div>
 </main>
+
+<!-- TODO: See styling for disabled button at /settings -->
+<style>
+  .unclickable {
+    cursor: not-allowed;
+    outline: none;
+    border: none;
+  }
+</style>

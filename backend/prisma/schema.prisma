@@ -10,63 +10,73 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model user {
+model User {
   id        Int     @id @default(autoincrement())
   username  String  @unique
   discordId String? @unique
   name      String  @default("Unknwown")
   password  String?
-  team      team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  Team      Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
   teamId    Int?
 }
 
-model team {
-  id                  Int                   @id @default(autoincrement())
-  name                String                @unique
-  members             user[]
-  isCommittee         Boolean               @default(false)
-  channelId           String?
-  roleId              String?
-  puzzlesubmission    puzzlesubmission[]
-  challangesubmission challengesubmission[]
-  crazy88submission   crazy88submission[]
+model Team {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  Users       User[]
+  isCommittee Boolean      @default(false)
+  channelId   String?
+  roleId      String?
+  Submissions Submission[]
 }
 
-model puzzlesubmission {
-  id            Int      @id @default(autoincrement())
-  team          team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+enum submissionType {
+  PUZZLE
+  CHALLENGE
+  CRAZY88
+}
+
+model Submission {
+  id            Int            @id @default(autoincrement())
+  Team          Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId        Int
-  fileLink      String   @unique
+  fileLink      String         @db.VarChar(275) // A file link can be longer than the default 191 character limit
+  isFunny       Boolean        @default(false)
+  timeSubmitted DateTime       @default(now())
   grading       Int?
-  location      Int
-  isFunny       Boolean  @default(false)
-  timeSubmitted DateTime @default(now())
+  type          submissionType
+
+  PuzzleSubmission    PuzzleSubmission?
+  ChallengeSubmission ChallengeSubmission?
+  Crazy88Submission   Crazy88Submission?
 }
 
-model challengesubmission {
-  id            Int      @id @default(autoincrement())
-  team          team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId        Int
-  fileLink      String   @unique
-  grading       Int?
-  location      Int
-  number        Int
-  isFunny       Boolean  @default(false)
-  timeSubmitted DateTime @default(now())
+model PuzzleSubmission {
+  id       Int @id @default(autoincrement())
+  location Int
+
+  Submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId Int        @unique
 }
 
-model crazy88submission {
-  id            Int      @id @default(autoincrement())
-  team          team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  teamId        Int
-  fileLink      String   @unique
-  grading       Int?
-  number        Int
-  isFunny       Boolean  @default(false)
-  timeSubmitted DateTime @default(now())
+model ChallengeSubmission {
+  id       Int @id @default(autoincrement())
+  location Int
+  number   Int
+
+  Submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId Int        @unique
 }
 
-model variables {
+model Crazy88Submission {
+  id     Int @id @default(autoincrement())
+  number Int
+
+  Submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId Int        @unique
+}
+
+model Variables {
   key   String  @id
   value String?
 }

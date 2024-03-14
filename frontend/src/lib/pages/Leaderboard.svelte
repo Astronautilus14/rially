@@ -64,7 +64,7 @@
         isPublic = !isPublic;  // Revert the isPublic flag to its previous state
       })
       .then(() => isLoading.set(false));  // Set the loading state to false after the request is complete
-  }
+    }
 </script>
 
 <main class="contianer">

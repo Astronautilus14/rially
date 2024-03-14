@@ -5,13 +5,14 @@
   import { navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
   import { Link } from "svelte-routing";
+  import type { Submission } from "../types";
+  import FileDisplay from "../../components/FileDisplay.svelte";
 
   export let id: string;
-  export let type: string;
 
   const socket = io(settings.socketServerUrl); // Initialize Socket.IO client
 
-  let submission; // Variable to store the submission data
+  let submission: Submission; // Variable to store the submission data
   let loading = true; // Flag to track if data is loading
   let error = ""; // Variable to store error messages
   let isFunny = false; // Flag to track if submission is funny
@@ -20,7 +21,7 @@
 
   onMount(async () => {
     // Perform actions when component is mounted
-    fetch(`${settings.api_url}/submissions/${type}/${id}`, {
+    fetch(`${settings.api_url}/submissions/${id}`, {
       headers: {
         Authorization: localStorage.getItem("rially::token"),
       },
@@ -30,8 +31,9 @@
         if (res.ok) return res.json();
 
         // If the response status is 401 (Unauthorized) or 403 (Forbidden), navigate to the login page
-        if (res.status === 401 || res.status === 403)
+        if (res.status === 401 || res.status === 403) {
           return navigate("/login", { replace: true });
+        }
 
         // If there is an error, store the error message
         error = (await res.json()).message;
@@ -57,7 +59,7 @@
         Authorization: localStorage.getItem("rially::token"),
       },
       body: JSON.stringify({
-        type: type,
+        type: submission.type,
         id: submission.id,
         grading: score,
         isFunny,
@@ -86,7 +88,7 @@
     // If the grading is finished, return
     if (isGraded) return; 
     // Let the other clients know you stopped grading
-    socket.emit("grading-canceled", submission.id, type);
+    socket.emit("grading-canceled", submission.id, submission.type);
   });
 </script>
 
@@ -105,13 +107,19 @@
             {/if}
 
             <div class="col-md-3 col-6">
-              {#if submission?.location}
-                <p>Location: {submission?.location}</p>
+              {#if submission.PuzzleSubmission?.location}
+                <p>Location: {submission.PuzzleSubmission.location}</p>
+              {:else if submission.ChallengeSubmission?.location}
+                <p>Location: {submission.ChallengeSubmission.location}</p>
               {/if}
-              {#if submission?.number}
-                <p>Number: {submission?.number}</p>
+
+              {#if submission.ChallengeSubmission?.number}
+                <p>Number: {submission.ChallengeSubmission.number}</p>
+              {:else if submission.Crazy88Submission?.number}
+                <p>Number: {submission.Crazy88Submission.number}</p>
               {/if}
-              <p>Team: <Link to={`/teams/${submission?.team.id}`}>{submission?.team?.name}</Link></p>
+
+              <p>Team: <Link to={`/teams/${submission.Team.id}`}>{submission.Team.name}</Link></p>
               <p>Grade: {submission?.grading ?? "not graded yet"}</p>
               <p>
                 Speed place: {speedPlace}{speedPlace === 1
@@ -123,7 +131,7 @@
                   : "th"}
               </p>
               <p>
-                Submission time: {new Date(submission?.timeSubmitted)
+                Submission time: {new Date(submission.timeSubmitted)
                   .toTimeString()
                   .split(" ")[0]}
               </p>
@@ -140,7 +148,7 @@
               <form on:submit|preventDefault={handleApprove} class="">
                 <input
                   type="number"
-                  value={type === "puzzle"
+                  value={submission.type === "PUZZLE"
                     ? (5 + Math.max(4 - speedPlace, 0)).toString()
                     : null}
                   name="score"
@@ -157,30 +165,14 @@
               </form>
 
               {#if !isGraded}
-                <button class="btn btn-danger mb-3" on:click={() => grade(0)}
-                  >Decline</button
-                >
+                <button class="btn btn-danger mb-3" on:click={() => grade(0)}>
+                  Decline
+                </button>
               {/if}
             </div>
 
             <div class="col-12 col-md-6">
-              {#if /.*.(png|jpg|jpeg|gif|webp|avif|apng|bmp)$/i.test(submission?.fileLink)}
-                <img
-                  class="img-fluid"
-                  style="max-height: 60vh; max-width: 40vw;"
-                  src={submission?.fileLink}
-                  alt="Submission"
-                />
-              {:else if /.*.(mp4|webm|ogg)$/i.test(submission?.fileLink)}
-                <!-- svelte-ignore a11y-media-has-caption -->
-                <video src={submission?.fileLink} controls />
-              {:else}
-                <p>
-                  File type not supported. Click <a href={submission?.fileLink}
-                    >here</a
-                  > to download it.
-                </p>
-              {/if}
+              <FileDisplay fileLink={submission.fileLink} />
             </div>
           {/if}
         </div>

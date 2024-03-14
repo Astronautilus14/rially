@@ -18,7 +18,7 @@ router.post("/", verifyToken, async (req, res) => {
   }: {
     roleId?: string;
     channelId: string;
-    type: string;
+    type: "PUZZLE" | "CHALLENGE" | "CRAZY88";
     number?: number;
     location?: number;
     grading: number;
@@ -29,10 +29,11 @@ router.post("/", verifyToken, async (req, res) => {
     !type ||
     grading === null ||
     grading === undefined
-  )
+  ) {
     return res.status(400).json({
       message: "Role ID, Channel ID, Type and Grading are required",
     });
+  }
 
   // Get the correct guild (aka discod server)
   const guild = await getFromCacheOrFetch(
@@ -53,12 +54,12 @@ router.post("/", verifyToken, async (req, res) => {
 
   // Send a message about their grade using this ridicilous oneliner
   await channel.send(
-    `Your ${type} submission ${
-      number ? `${number} ` : ""
-    }${location ? `for location ${location} ` : ""}has been ${
+    `Your ${type.toLowerCase()} submission ${number ? `${number} ` : ""}${
+      location ? `for location ${location} ` : ""
+    }has been ${
       grading > 0
         ? `graded with ${grading} point${grading > 1 ? "s" : ""}! ${
-            type === "puzzle"
+            type === "PUZZLE"
               ? `You can now see the location challenges${
                   location !== 3 ? " and next puzzles " : " "
                 }in the puzzle category.`
@@ -69,7 +70,7 @@ router.post("/", verifyToken, async (req, res) => {
   );
 
   // If the type was not puzzle or the puzzle got rejected return
-  if (type !== "puzzle" || grading <= 0) return res.sendStatus(200);
+  if (type !== "PUZZLE" || grading <= 0) return res.sendStatus(200);
 
   if (!location)
     return res.status(400).json({
@@ -84,9 +85,11 @@ router.post("/", verifyToken, async (req, res) => {
 
   // Find the channel id of the next location
   const puzzleChannelId = process.env[`LOCATION_${location}_ID`];
-  if (!puzzleChannelId) return res.status(400).json({
-    message: "It looks like you have already reached the end of this RIAlly! This means you have already reached the last location."
-  });
+  if (!puzzleChannelId)
+    return res.status(400).json({
+      message:
+        "It looks like you have already reached the end of this RIAlly! This means you have already reached the last location.",
+    });
 
   let puzzleChannel = await getFromCacheOrFetch(
     guild.channels,

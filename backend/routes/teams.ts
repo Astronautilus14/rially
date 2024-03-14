@@ -21,9 +21,11 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
       },
     });
   } catch (error: any) {
-    if (error.code === "P2002" && error.meta?.target === "team_name_key")
+    if (error.code === "P2002" && error.meta?.target === "team_name_key") {
       return sendError(res, "Team name already exists", 400);
+    }
     console.error(error);
+    return sendError(res);
   }
   if (!team) return sendError(res);
 
@@ -44,8 +46,11 @@ router.post("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    sendError(res, "Could not create the channel and/or role in the discord server. Please do so manually", 500);
-    return;
+    return sendError(
+      res,
+      "Could not create the channel and/or role in the discord server. Please do so manually",
+      500
+    );
   }
 
   // Update the discord role id and channel id in the database
@@ -116,59 +121,59 @@ router.patch(
   isCommittee,
   async (req: Request, res) => {
     const { newName, teamId } = req.body;
-    if (!newName || !teamId)
+    if (!newName || !teamId) {
       return sendError(res, "New name and Team ID are required", 400);
+    }
 
     // Update the team name in the data base
-    prisma.team
-      .update({
+    let team;
+    try {
+      team = await prisma.team.update({
         where: {
           id: teamId,
         },
         data: {
           name: newName,
         },
-      })
-      .then( async (team) => {
-
-        // Send a request to the bot to change the team name in the discord server
-        let hasSent = false;
-        try {
-          await axios.patch(
-            `${process.env.BOT_API_URL}/teams`,
-            {
-              roleId: team.roleId,
-              channelId: team.channelId,
-              newName,
-            },
-            {
-              headers: {
-                Authorization: process.env.BOT_API_KEY!,
-              },
-            }
-          );
-        } catch (error) {
-          console.error(error);
-          hasSent = true;
-          res.status(500).json({
-            message:
-              "Could not update team name in discord. Please update the channel name and role name manually. Names don't effect the functionality!",
-          });
-        }
-        if (!hasSent) return res.sendStatus(200);
-      })
-      .catch((error) => {
-        console.error(error);
-        return sendError(res);
       });
+    } catch (error) {
+      console.error(error);
+      return sendError(res);
+    }
+    if (!team) return sendError(res, `Team ID ${teamId} not found`, 404);
+
+    // Send a request to the bot to change the team name in the discord server
+    try {
+      await axios.patch(
+        `${process.env.BOT_API_URL}/teams`,
+        {
+          roleId: team.roleId,
+          channelId: team.channelId,
+          newName,
+        },
+        {
+          headers: {
+            Authorization: process.env.BOT_API_KEY!,
+          },
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      return sendError(
+        res,
+        "Could not update team name in discord. Please update the channel name and role name manually. Names don't effect the functionality!"
+      );
+    }
+    return res.sendStatus(200);
   }
 );
 
 // Method to add user to a team
 router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
   const { userId, teamId }: { userId: number; teamId: number } = req.body;
-  if (!userId || !teamId)
+  if (!userId || !teamId) {
     return sendError(res, "User ID and Team ID are required", 400);
+  }
 
   // Add member in db
   let user;
@@ -181,20 +186,21 @@ router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
         teamId,
       },
       include: {
-        team: true,
+        Team: true,
       },
     });
   } catch (error) {
     console.error(error);
+    return sendError(res);
   }
-  if (!user) return sendError(res, "User ID is now known", 400);
+  if (!user) return sendError(res, `User ID ${userId} is unknown`, 404);
 
   // Send a request to the bot to add the user to a team in the discord server
   try {
     await axios.post(
       `${process.env.BOT_API_URL}/member`,
       {
-        roleId: user.team?.roleId,
+        roleId: user.Team!.roleId,
         userId: user.discordId,
       },
       {
@@ -205,7 +211,11 @@ router.post("/member", tokenCheck, teamCheck, isCommittee, async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    return sendError(res, "Could not delete user from team in discord. Please do so manually by removing the user's role in the discord server.", 500);
+    return sendError(
+      res,
+      "Could not delete user from team in discord. Please do so manually by removing the user's role in the discord server.",
+      500
+    );
   }
 
   return res.sendStatus(200);
@@ -223,21 +233,21 @@ router.delete(
     if (!userId) return sendError(res, "User ID is required", 400);
 
     // Update data base
-    let user;
-    try {
-      user = await prisma.user.update({
+    const user = await prisma.user
+      .update({
         where: {
           id: userId,
         },
         data: {
           teamId: newTeamId ?? null,
         },
+      })
+      .catch((e) => {
+        console.error(e);
+        return sendError(res);
       });
-    } catch (error) {
-      console.error(error);
-      return sendError(res);
-    }
-    if (!user) return sendError(res, "User not found", 404);
+
+    if (!user) return sendError(res, `User ID ${userId} not found`, 404);
     if (!user.discordId) return res.sendStatus(200);
 
     // Send a request to the bot to change the role of the user in the discord server
@@ -272,8 +282,9 @@ router.patch(
   isCommittee,
   async (req, res) => {
     const { userId, newName }: { userId: number; newName: string } = req.body;
-    if (!userId || !newName)
+    if (!userId || !newName) {
       return sendError(res, "User ID and New name required", 400);
+    }
 
     // Update the username in the database
     const user = await prisma.user
@@ -337,48 +348,46 @@ router.get("/users", tokenCheck, teamCheck, isCommittee, async (req, res) => {
 });
 
 // Method to get the id of the committee team
-router.get(
-  "/committee",
-  tokenCheck,
-  teamCheck,
-  isCommittee,
-  async (req, res) => {
-    try {
-      res.json(
-        await prisma.team.findFirst({
-          where: { isCommittee: true },
-          select: { id: true },
-        })
-      );
-    } catch (error) {
-      console.error(error);
-      sendError(res)
-    }
-  }
-);
-
-// Method to get all team + members for public
-router.get("/:id/public", async (req, res) => {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
-
+router.get("/committee", tokenCheck, teamCheck, isCommittee, async (_, res) => {
   try {
-    res.json(await prisma.team.findUnique({
-      where: { id },
-      include: {
-        members: {
-          select: { username: true },
-        },
-      },
-    }));
+    res.json(
+      await prisma.team.findFirst({
+        where: { isCommittee: true },
+        select: { id: true },
+      })
+    );
   } catch (error) {
     console.error(error);
     sendError(res);
   }
 });
 
+// Method to get all team + members for public
+router.get("/:id/public", async (req, res) => {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
+
+  const team = await prisma.team
+    .findUnique({
+      where: { id },
+      select: {
+        Users: {
+          select: { username: true },
+        },
+        name: true,
+      },
+    })
+    .catch((e) => {
+      console.error(e);
+      return sendError(res);
+    });
+
+  if (!team) return sendError(res, `Team ${id} not found`, 404);
+  res.json({ team });
+});
+
 // Method to get all users who are not yet in a team + list of teams
-router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+router.get("/lonely", tokenCheck, teamCheck, isCommittee, async (_, res) => {
   try {
     const users = prisma.user.findMany({
       where: {
@@ -412,20 +421,23 @@ router.get("/:id", tokenCheck, teamCheck, isCommittee, (req, res) => {
   const id = Number(req.params.id);
   if (Number.isNaN(id)) return sendError(res, "ID is not a number", 400);
 
-  prisma.team.findUnique({
-    where: { id },
-    include: {
-      members: {
-        select: { username: true, name: true, id: true, discordId: true },
+  prisma.team
+    .findUnique({
+      where: { id },
+      include: {
+        Users: {
+          select: { username: true, name: true, id: true, discordId: true },
+        },
       },
-    },
-  }).then( (data) => {
-    if (!data) return res.status(404).json({ message: "ID is not known" });
-    return res.json(data);
-  }).catch( (error) => {
-    console.error(error);
-    sendError(res);
-  });
+    })
+    .then((data) => {
+      if (!data) return res.status(404).json({ message: "ID is not known" });
+      return res.json(data);
+    })
+    .catch((error) => {
+      console.error(error);
+      sendError(res);
+    });
 });
 
 export default router;

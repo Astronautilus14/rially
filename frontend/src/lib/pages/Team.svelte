@@ -15,11 +15,9 @@
   let team: Team; // Data about the team
 
   // When the component is mounted
-  onMount(() => {
+  onMount(async () => {
     // Fetch data about the team
-    fetchPlusPlus(`/teams/${id}`).then((data: Team) => {
-      team = data;
-    });
+    team = await fetchPlusPlus(`/teams/${id}`) as Team;
   });
 
   // Flag that indicates if a delete request is loading
@@ -68,7 +66,7 @@
     // Make a request to delete a user from a team
     fetchPlusPlus("/teams/member", "DELETE", { userId: id }).finally(() => {
       // Remove the member from the team's member list
-      team.members = team.members.filter((member) => member.id !== id);
+      team.Users = team.Users.filter((member) => member.id !== id);
       loadingMemberDeletes[id] = false;
       delete loadingMemberDeletes[id];
       error = "";
@@ -152,7 +150,7 @@
             {/if}
             <div class="col-12 col-md-6">
               <h2>Team members</h2>
-              {#if team.members.length === 0}
+              {#if team.Users.length === 0}
                 <p>This team has no members yet</p>
               {:else}
                 <table class="table table-striped table-bordered border-white">
@@ -165,42 +163,42 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {#each team.members as member}
+                    {#each team.Users as user}
                       <tr>
-                        <td>{member.name}</td>
+                        <td>{user.name}</td>
                         <td>
-                          {#if member.name === "admin"}
+                          {#if user.name === "admin"}
                           admin
                           {:else}
                           <input
                             type="text"
                             name="username"
-                            value={member.username}
+                            value={user.username}
                             class="seamlessInput"
 
                             on:blur={(event) => {
                               changeUserNameFocus = null;
                               // @ts-expect-error
-                              handleChangeUsername(event.target.username, member.id, member.username, event.target);
+                              handleChangeUsername(event.target.username, user.id, user.username, event.target);
                             }}
 
                             on:focus={(event) => {
-                              changeUserNameFocus = { target: event.target, id: member.id, old: member.username };
+                              changeUserNameFocus = { target: event.target, id: user.id, old: user.username };
                             }}
                           />
                           <Pencil />
                           {/if}
                         </td>
                         <td>
-                          {member.discordId ? member.discordId : "Not connected"}
+                          {user.discordId ? user.discordId : "Not connected"}
                         </td>
                         <td>
-                          {#if member.username !== "admin"}
+                          {#if user.username !== "admin"}
                             <button
                               class="delete btn btn-danger"
-                              on:click={() => handleMemberDelete(member.id)}
+                              on:click={() => handleMemberDelete(user.id)}
                             >
-                              {loadingMemberDeletes[member.id]
+                              {loadingMemberDeletes[user.id]
                                 ? "Loading..."
                                 : "Delete"}
                             </button>

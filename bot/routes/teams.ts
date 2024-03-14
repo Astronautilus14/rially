@@ -96,6 +96,10 @@ router.post("/", verifyToken, async (req, res) => {
         allow: ["ViewChannel"],
       },
       {
+        id: process.env.BOT_ROLE_ID!,
+        allow: ["ViewChannel"],
+      },
+      {
         id: everyone.id,
         deny: ["ViewChannel"],
       },

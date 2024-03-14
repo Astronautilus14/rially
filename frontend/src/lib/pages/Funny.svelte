@@ -4,8 +4,10 @@
   import { Link, navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
+  import type { Submission } from "../types";
+  import FileDisplay from "../../components/FileDisplay.svelte";
 
-  let data = []; // Array to store the fetched data
+  let data: Submission[] = []; // Array to store the fetched data
   let error = ""; // Variable to store any potential error messages
 
   onMount(() => {
@@ -18,7 +20,7 @@
       },
     })
       .then(async (res) => {
-        if (res.ok) return (data = (await res.json()).submissions); // If the response is successful, store the submissions in the data array
+        if (res.ok) return (data = (await res.json()).funny); // If the response is successful, store the submissions in the data array
 
         if (res.status === 401 || res.status === 403)
           return navigate("/login", { replace: true }); // If the response status is 401 (Unauthorized) or 403 (Forbidden), navigate to the login page
@@ -43,28 +45,13 @@
           <!-- Loop through the data array and iterate over each submission -->
           {#each data as submission}
             <div class="card col mx-2" style="width: 18rem;">
-              <!-- If the file link matches the image file extensions -->
-              {#if /.*.(png|jpg|jpeg|gif|webp|avif|apng|bmp)$/i.test(submission?.fileLink)}
-                <!-- Display the image -->  
-                <img
-                  src={submission?.fileLink}
-                  alt="Submission"
-                  width="400"
-                  style="max-height: 400px;"
-                  class="card-img-top img-fluid"
-                />
-              <!-- If the file link matches a video file extensions -->
-              {:else if /.*.(mp4|webm|ogg)$/i.test(submission?.fileLink)}
-                <!-- svelte-ignore a11y-media-has-caption -->
-                <!-- Display the video -->
-                <video src={submission?.fileLink} controls />
-              {/if}
+              <FileDisplay fileLink={submission.fileLink} />
               <div class="card-body">
                 <h5 class="card-title">
                   Team
                   <!-- Link to the team's page -->
-                  <Link to={`/teams/${submission.team.id}`}>
-                    {submission.team.name}
+                  <Link to={`/teams/${submission.Team.id}`}>
+                    {submission.Team.name}
                   </Link>
                 </h5>
                 <!-- Link to the submission's page -->

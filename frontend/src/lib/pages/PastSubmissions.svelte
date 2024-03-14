@@ -3,8 +3,10 @@
   import { onMount } from "svelte";
   import { Link, navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
+  import type { Submission } from "../types";
+  import FileDisplay from "../../components/FileDisplay.svelte";
 
-  let subs = [];
+  let submissions: Submission[] = [];
   let error = "";
 
   onMount(async () => {
@@ -20,7 +22,7 @@
         throw new Error((await response.json()).message);
       })
       .then((data) => {
-        subs = [...subs, ...data.pending];
+        submissions = [...submissions, ...data.pending];
       })
       .catch((error) => {
         console.error(error);
@@ -46,32 +48,16 @@
               </tr>
             </thead>
             <tbody>
-              {#each subs as submission}
+              {#each submissions as submission}
                 <tr>
                   <td>
-                    <Link to={`/teams/${submission.team.id}/public`}>
-                      {submission.team.name}
+                    <Link to={`/teams/${submission.Team.id}/public`}>
+                      {submission.Team.name}
                     </Link>
                   </td>
                   <td>{submission.type}</td>
                   <td>
-                    {#if /.*.(png|jpg|jpeg|gif|webp|avif|apng|bmp)$/i.test(submission?.fileLink)}
-                      <img
-                        class="img-fluid"
-                        style="max-height: 30vh; max-width: 40vw;"
-                        src={submission?.fileLink}
-                        alt="Submission"
-                      />
-                    {:else if /.*.(mp4|webm|ogg)$/i.test(submission?.fileLink)}
-                      <!-- svelte-ignore a11y-media-has-caption -->
-                      <video src={submission?.fileLink} controls />
-                    {:else}
-                      <p>
-                        File type not supported. Click <a
-                          href={submission?.fileLink}>here</a
-                        > to download it.
-                      </p>
-                    {/if}
+                    <FileDisplay fileLink={submission.fileLink} />
                   </td>
                   <td>
                     <Link to={`/submission/${submission?.type}/${submission?.id}`}>More</Link>

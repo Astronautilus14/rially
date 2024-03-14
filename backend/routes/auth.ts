@@ -17,36 +17,26 @@ router.post("/registerCommittee", async (req, res) => {
     username,
     password,
     name,
-  }: { username: string; password: string; name: string } =
-    req.body;
-  if (!username || !name)
+  }: { username: string; password: string; name: string } = req.body;
+  if (!username || !name) {
     return sendError(res, "Username and name are required", 400);
+  }
 
   if (password.length < 6) return sendError(res, "Password too short", 400);
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
 
-  prisma.user
+  const user = await prisma.user
     .create({
       data: {
         username: username.toLowerCase(),
         password: hash,
         name,
       },
-    })
-    .then((data) => {
-      const token = jwt.sign(
-        {
-          uid: data.id,
-        },
-        secretKey
-      );
-      return res.send(
-        JSON.stringify({
-          token,
-        })
-      );
+      select: {
+        id: true,
+      },
     })
     .catch((error) => {
       if (error.code === "P2002" && error.meta?.target === "user_username_key")
@@ -56,6 +46,10 @@ router.post("/registerCommittee", async (req, res) => {
       console.error(error);
       return sendError(res);
     });
+  if (!user) return sendError(res);
+
+  const token = jwt.sign({ uid: user.id }, secretKey);
+  return res.send(JSON.stringify({ token }));
 });
 
 // Method to register a participant
@@ -65,10 +59,11 @@ router.post("/register", async (req, res) => {
     username,
     name,
   }: { token: string; username: string; name: string } = req.body;
-  if (!token || !username || !name)
+  if (!token || !username || !name) {
     return sendError(res, "Token, Username and Name are required");
-  // @ts-expect-error
-  const secret: string = process.env.LINK_DISCORD_SECRET;
+  }
+
+  const secret: string = process.env.LINK_DISCORD_SECRET!;
 
   // The token is a json web token which has the user's discord id in it's payload
   let discordId: string;
@@ -97,7 +92,7 @@ router.post("/register", async (req, res) => {
   if (sentResponse) return;
 
   // Create the user in de database
-  prisma.user
+  const user = await prisma.user
     .create({
       data: {
         username: username.toLowerCase(),
@@ -106,35 +101,46 @@ router.post("/register", async (req, res) => {
         // @ts-expect-error
         discordId,
       },
-    })
-    .then( async (data) => {
-      // Create a token
-      const token = jwt.sign(
-        {
-          uid: data.id,
-        },
-        secretKey
-      );
-
-      // Send the token to the client
-      return res.send(
-        JSON.stringify({
-          token,
-        })
-      );
+      select: {
+        id: true,
+      },
     })
     .catch((error) => {
       // If the username is already in the database, send a 400
-      if (error.code === "P2002" && error.meta?.target === "user_username_key")
+      if (
+        error.code === "P2002" &&
+        error.meta?.target === "user_username_key"
+      ) {
         return sendError(res, "Username already exists", 400);
+      }
 
       // If the discord id is already in the database, send a 400
-      if (error.code === "P2002" && error.meta?.target === "user_discordId_key")
+      if (
+        error.code === "P2002" &&
+        error.meta?.target === "user_discordId_key"
+      ) {
         return sendError(res, "Discord is already connected", 400);
+      }
 
       console.error(error);
       return sendError(res);
     });
+  if (!user) return;
+
+  // Create a token
+  const jwtToken = jwt.sign(
+    {
+      uid: user.id,
+    },
+    secretKey
+  );
+
+  // Send the token to the client
+  res.send(
+    JSON.stringify({
+      token: jwtToken,
+    })
+  );
 
   // Send a reqeuest to the bot to change the user's discord nickname
   // to what they inputed on the registration page
@@ -160,8 +166,8 @@ router.post("/register", async (req, res) => {
 router.post("/verifytoken", async (req, res) => {
   const { token }: { token: string } = req.body;
   if (!token) return sendError(res, "No token provided", 400);
-  
-  jwt.verify(token, secretKey, (err, payload) => {
+
+  jwt.verify(token, secretKey, async (err, payload) => {
     if (err || !payload || typeof payload === "string") {
       return sendError(res, "Invalid token", 401);
     }
@@ -169,28 +175,27 @@ router.post("/verifytoken", async (req, res) => {
     const uid = payload.uid;
     if (!uid) return sendError(res, "Invalid token", 401);
 
-    prisma.user
+    const user = await prisma.user
       .findUnique({
         where: {
           id: uid,
         },
       })
-      .then((data) => {
-        // No user found with that id
-        if (!data) return sendError(res, "Invalid token", 401);
-
-        return res.send(
-          JSON.stringify({
-            username: data.username,
-            name: data.name,
-            discordId: data.discordId,
-          })
-        );
-      })
       .catch((error) => {
         console.error(error);
         return sendError(res);
       });
+
+    // No user found with that id
+    if (!user) return sendError(res, "Invalid token", 401);
+
+    return res.send(
+      JSON.stringify({
+        username: user.username,
+        name: user.name,
+        discordId: user.discordId,
+      })
+    );
   });
 });
 
@@ -206,7 +211,7 @@ router.post("/login", async (req, res) => {
       username: username.toLowerCase(),
     },
   });
-  if (!user) return sendError(res, `Username ${username} not found`, 400);
+  if (!user) return sendError(res, `Username ${username} not found`, 409);
   if (!user.password) return sendError(res, "No password set", 400);
 
   // Compere the hashed password to the plain password
@@ -215,7 +220,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign({ uid: user.id }, secretKey);
     return res.json({ token });
   } else {
-    return sendError(res, "Password incorect", 400);
+    return sendError(res, "Password incorect", 401);
   }
 });
 
@@ -233,26 +238,17 @@ router.post("/changepassword", tokenCheck, async (req: Request, res) => {
     where: { id: req.data!.uid },
   });
 
-  if (!user)
-    return sendError(
-      res,
-      "User ID not found",
-      404
-    );
+  if (!user) return sendError(res, "User ID not found", 404);
 
-  if (!user.password)
-    return sendError(
-      res,
-      "You have no password set",
-      400
-    );
+  if (!user.password) return sendError(res, "You have no password set", 400);
 
   // Compere the hashed password to the plain password
   if (!(await bcrypt.compare(oldPassword, user.password)))
     return sendError(res, "Old password incorrect", 400);
 
-  if (newPassword.length < 6)
+  if (newPassword.length < 6) {
     return sendError(res, "Password must be at least 6 characters", 400);
+  }
 
   // Salt and hash the new password
   const salt = await bcrypt.genSalt(10);
@@ -274,7 +270,8 @@ export function tokenCheck(req: Request, res: Response, next: NextFunction) {
   if (!token) return sendError(res, "No authorization token", 401);
 
   jwt.verify(token, secretKey, (err, payload) => {
-    if (err || !payload || typeof payload === "string") return sendError(res, "Invalid token", 401);
+    if (err || !payload || typeof payload === "string")
+      return sendError(res, "Invalid token", 401);
 
     req.data = {
       uid: payload.uid,
@@ -305,7 +302,7 @@ export async function teamCheck(
       id: uid,
     },
     include: {
-      team: true,
+      Team: true,
     },
   });
 
@@ -316,15 +313,15 @@ export async function teamCheck(
   }
 
   // User has no team
-  if (!user.team)
+  if (!user.Team)
     return sendError(
       res,
       "You need to be placed in a team for this. Contact the committee if you registered more than 30 minutes ago since they might have forgotten to place you in your team!",
       403
     );
-    
+
   // Add the team to the request
-  req.data.team = user.team;
+  req.data.team = user.Team;
   next();
 }
 
@@ -365,7 +362,7 @@ export async function checkDiscordId(
       discordId,
     },
     include: {
-      team: true,
+      Team: true,
     },
   });
 
@@ -376,7 +373,7 @@ export async function checkDiscordId(
   req.data = {
     uid: user.id,
     username: user.username,
-    team: user.team ?? undefined,
+    team: user.Team ?? undefined,
   };
   next();
 }
