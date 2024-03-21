@@ -109,7 +109,7 @@ router.post("/register", async (req, res) => {
       // If the username is already in the database, send a 400
       if (
         error.code === "P2002" &&
-        error.meta?.target === "user_username_key"
+        error.meta?.target === "User_username_key"
       ) {
         return sendError(res, "Username already exists", 400);
       }
@@ -117,7 +117,7 @@ router.post("/register", async (req, res) => {
       // If the discord id is already in the database, send a 400
       if (
         error.code === "P2002" &&
-        error.meta?.target === "user_discordId_key"
+        error.meta?.target === "User_discordId_key"
       ) {
         return sendError(res, "Discord is already connected", 400);
       }

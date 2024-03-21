@@ -1,7 +1,7 @@
 import express from "express";
 import prisma from "../utils/database";
 import sendError from "../utils/sendError";
-import { isCommittee, teamCheck, tokenCheck } from "./auth";
+import { checkBotApiKey, isCommittee, teamCheck, tokenCheck } from "./auth";
 import type { Request } from "../utils/types";
 import axios from "axios";
 
@@ -438,6 +438,37 @@ router.get("/:id", tokenCheck, teamCheck, isCommittee, (req, res) => {
       console.error(error);
       sendError(res);
     });
+});
+
+// Method to get a user by discord ID. Used by the discord bot
+router.get("/discord/:id", checkBotApiKey, async (req, res) => {
+  const discordId = req.params.id;
+  if (!discordId) return sendError(res, "Discord ID required", 400);
+  console.log(discordId);
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { discordId },
+      select: {
+        id: true,
+        discordId: true,
+        username: true,
+        Team: {
+          select: {
+            id: true,
+            channelId: true,
+            roleId: true,
+            name: true,
+          },
+        },
+      },
+    });
+    if (!user) return sendError(res, "Discord ID not found", 404);
+    return res.json({ user });
+  } catch (error) {
+    console.error(error);
+    return sendError(res);
+  }
 });
 
 export default router;

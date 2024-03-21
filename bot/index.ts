@@ -12,6 +12,8 @@ import submission from "./commands/submission";
 import teamsRouter from "./routes/teams";
 import gradeRouter from "./routes/grade";
 import memberRouter from "./routes/member";
+import axios from "axios";
+import getFromCacheOrFetch from "./utils/getFromCacheOrFetch";
 
 dotenv.config();
 assert.notEqual(process.env.DISCORD_TOKEN, undefined);
@@ -47,7 +49,49 @@ export const client = new discordjs.Client({
   ],
 });
 
-client.on("guildMemberAdd", register);
+client.on("guildMemberAdd", async (guildMember) => {
+  // Check if the user is already in the database
+  console.log(guildMember.id);
+  const res = await axios.get(
+    `${process.env.API_URL}/teams/discord/${guildMember.id}`,
+    {
+      headers: {
+        Authorization: process.env.API_KEY!,
+      },
+      validateStatus: (status) => {
+        return (status >= 200 && status < 300) || status === 404;
+      },
+    }
+  );
+
+  if (res.status === 404) {
+    return await register(guildMember);
+  }
+
+  const user: {
+    id: number;
+    discordId: string;
+    username: string;
+    Team?: {
+      id: number;
+      name: string;
+      channelId: string;
+      roleId: string;
+    };
+  } = res.data.user;
+
+  // Give the user their username
+  await guildMember.setNickname(user.username);
+
+  // Give the user their team role
+  if (user.Team) {
+    const role = await getFromCacheOrFetch(
+      guildMember.guild.roles,
+      user.Team.roleId
+    );
+    await guildMember.roles.add(role);
+  }
+});
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
