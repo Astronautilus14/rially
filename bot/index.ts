@@ -1,5 +1,5 @@
 import discordjs, { GatewayIntentBits } from "discord.js";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import assert from "assert";
 import express from "express";
 import cors from "cors";
@@ -15,7 +15,7 @@ import memberRouter from "./routes/member";
 import axios from "axios";
 import getFromCacheOrFetch from "./utils/getFromCacheOrFetch";
 
-dotenv.config();
+// dotenv.config();
 assert.notEqual(process.env.DISCORD_TOKEN, undefined);
 assert.notEqual(process.env.DISCORD_SERVER_ID, undefined);
 assert.notEqual(process.env.API_URL, undefined);

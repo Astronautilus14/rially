@@ -1,8 +1,8 @@
 import { REST, Routes, SlashCommandBuilder } from "discord.js";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import assert from "assert";
 
-dotenv.config();
+// dotenv.config();
 
 assert.notEqual(process.env.APPLICATION_ID, undefined);
 assert.notEqual(process.env.DISCORD_TOKEN, undefined);

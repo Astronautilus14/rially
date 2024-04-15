@@ -1,18 +1,28 @@
-FROM node:16
-WORKDIR /usr
+FROM node:20 as base
+
+WORKDIR /app
+
 COPY package*.json ./
+
 COPY tsconfig.json ./
-COPY .env ./
+
 RUN npm install
-COPY . ./src
+
+
+FROM base as dev
+
+COPY . .
+
+
+FROM dev as build
+
 RUN npm run build
 
-## this is stage two , where the app actually runs
-FROM node:16
-WORKDIR /usr
-COPY package*.json ./
-RUN npm install --only=production
-COPY --from=0 /usr/dist .
-COPY --from=0 /usr/.env .
+
+FROM base as prod
+
+COPY --from=build /app/dist /app
+
 RUN node registerCommands.js
-CMD ["node","index.js"]
+
+CMD ["node", "index.js"]

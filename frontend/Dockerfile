@@ -1,15 +1,10 @@
-FROM node:16
+FROM node:16 as dev
 
-WORKDIR /usr
-
-COPY package*.json ./
-
-COPY tsconfig.json ./
-
-RUN npm install
+WORKDIR /app
 
 COPY . .
 
-RUN npm run build
+RUN npm install
 
-CMD ["npm","run","preview"]
+RUN ls -l -a
+

@@ -1,0 +1,77 @@
+services:
+  bot:
+    build: 
+      context: ./bot
+      target: dev
+    ports:
+      - ${BOT_PORT}:${BOT_PORT}
+    command: npm run dev
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: development
+      PORT: ${BOT_PORT}
+      APPLICATION_ID: ${DISCORD_APPLICATION_ID}
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      API_URL: http://127.0.0.1:${BACKEND_PORT}
+      API_KEY: secret
+      WEBSITE_URL: http://localhost:8083
+      LINK_DISCORD_SECRET: secret
+      DISCORD_SERVER_ID: ${DISCORD_SERVER_ID}
+      TEAMS_CAT_ID: ${DISCORD_TEAMS_CAT_ID}
+      LOCATION_1_ID: ${DISCORD_LOCATION_1_ID}
+      LOCATION_2_ID: ${DISCORD_LOCATION_2_ID}
+      LOCATION_3_ID: ${DISCORD_LOCATION_3_ID}
+      BOT_ROLE_ID: ${DISCORD_BOT_ROLE_ID}
+    network_mode: "host"
+    volumes:
+      - ./bot:/app
+  register-commands:
+    build: 
+      context: ./bot
+      target: dev
+    command: npm run register
+    environment:
+      APPLICATION_ID: ${DISCORD_APPLICATION_ID}
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+  backend:
+    build:
+      context: ./backend
+      target: dev
+    ports:
+      - ${BACKEND_PORT}:${BACKEND_PORT}
+      - ${SOCKET_PORT}:${SOCKET_PORT}
+    command: npm run dev
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: development
+      PORT: ${BACKEND_PORT}
+      SOCKET_PORT: ${SOCKET_PORT}
+      JWT_PRIVATE_KEY: secret
+      LINK_DISCORD_SECRET: secret
+      BOT_API_KEY: secret
+      BOT_API_URL: http://127.0.0.1:${BOT_PORT}
+      DATABASE_URL: mysql://root:secret@127.0.0.1:8006/rially?schema=public
+    network_mode: "host"
+    volumes:
+      - ./backend:/app
+  frontend:
+    build: ./frontend
+    ports:
+      - 8083:8083
+    command: npx vite --host --port 8083
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+  db:
+    image: mariadb:10.3
+    ports:
+      - "8006:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: rially
+      MYSQL_ROOT_HOST: "%"
+    volumes:
+      - ./db:/var/lib/mysql

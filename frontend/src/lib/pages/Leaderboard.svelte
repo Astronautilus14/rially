@@ -43,7 +43,6 @@
 
   function handlePublicSwitch() {
     if ($isLoading) return;  // If loading state is true, return (prevent simultaneous requests)
-    isPublic = !isPublic;  // Toggle the isPublic flag
     isLoading.set(true);  // Set the loading state to true
     fetch(`${settings.api_url}/leaderboard`, {
       method: "PATCH",
@@ -55,16 +54,17 @@
         setPublic: isPublic,
       }),
     })
-      .then(async (res) => {
-        if (res.ok) return;  // If response is successful, continue
-        throw new Error((await res.json()).message);  // If there's an error, throw an error with the message
-      })
-      .catch((e) => {
-        error = e;  // Store the error message, if any
-        isPublic = !isPublic;  // Revert the isPublic flag to its previous state
-      })
-      .then(() => isLoading.set(false));  // Set the loading state to false after the request is complete
-    }
+    .then(async (res) => {
+      if (res.ok) {
+        isPublic = !isPublic;  // If response is successful, toggle the isPublic flag
+        isLoading.set(false);  // Set the loading state to false
+      }
+      throw new Error((await res.json()).message);  // If there's an error, throw an error with the message
+    })
+    .catch((e) => {
+      error = e;  // Store the error message, if any
+    })
+  }
 </script>
 
 <main class="contianer">

@@ -1,4 +1,4 @@
 {
-  "api_url": "http://localhost:8080",
-  "socketServerUrl": "http://localhost:7070"
+  "api_url": "http://127.0.0.1:8080",
+  "socketServerUrl": "http://127.0.0.1:8081"
 }
