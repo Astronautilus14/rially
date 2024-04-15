@@ -11,7 +11,7 @@ Web app with frontend in [Svelte](https://svelte.dev/), backend in [Node.js](htt
    - Create a channel for start, location 1, location 2, location 3 and crazy88
    - Set the default privalage to not read channels for location 1, 2, 3
 4. Create a discord bot. [Help](https://discordpy.readthedocs.io/en/stable/discord.html)
-   a. Set the permissions to TODO (use admin for now)
+   - Set the permissions to TODO (use admin for now)
 
 ## Development
 
