@@ -1,6 +1,6 @@
 services:
   bot:
-    build: 
+    build:
       context: ./bot
       target: dev
     ports:
@@ -25,9 +25,11 @@ services:
       BOT_ROLE_ID: ${DISCORD_BOT_ROLE_ID}
     network_mode: "host"
     volumes:
-      - ./bot:/app
+      - ./bot/commands:/app/commands
+      - ./bot/routes:/app/routes
+      - ./bot/utils:/app/utils
   register-commands:
-    build: 
+    build:
       context: ./bot
       target: dev
     command: npm run register
@@ -55,7 +57,9 @@ services:
       DATABASE_URL: mysql://root:secret@127.0.0.1:8006/rially?schema=public
     network_mode: "host"
     volumes:
-      - ./backend:/app
+      - ./backend/prisma:/app/prisma
+      - ./backend/routes:/app/routes
+      - ./backend/utils:/app/utils
   frontend:
     build: ./frontend
     ports:
