@@ -56,7 +56,7 @@ npm run dev
 #### Backend
 
 ```
-cd bot
+cd backend
 npm i
 cp .env.example .env
 ```
