@@ -17,7 +17,7 @@
         <p>
           Well there is actually nothing to show on the home page. So I type
           this text so it looks like there is actual content. This is part of my
-          study avoiding behavior.
+          study avoiding behavior. Kaas
         </p>
       </GlassCard>
       <QuoteCard />
