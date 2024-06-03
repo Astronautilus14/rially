@@ -1,7 +1,7 @@
 export type Team = {
   id: number;
   name: string;
-  Users?: Member[];
+  Users: Member[];
   isCommittee: boolean;
   channelId?: string;
   roleId?: string;

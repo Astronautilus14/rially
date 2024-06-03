@@ -17,10 +17,13 @@ const router = express.Router();
 
 // Method to get all submission marked as 'funny'
 router.get("/funny", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  const p = Number(req.query.p) || 1;
   // Get all entries from database
   const submissions = await prisma.submission.findMany({
     where: { isFunny: true },
     include: { Team: true },
+    take: 10,
+    skip: (p - 1) * 10,
   });
 
   return res.json({ funny: submissions });
@@ -262,9 +265,12 @@ router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
 
 // Method to get all graded submissions
 router.get("/past", tokenCheck, teamCheck, isCommittee, async (req, res) => {
+  const p = Number(req.query.p) || 1;
   const submissions = await prisma.submission.findMany({
     where: { grading: { not: null } },
     include: { Team: true },
+    take: 10,
+    skip: (p - 1) * 10,
   });
   return res.json({ pending: submissions });
 });

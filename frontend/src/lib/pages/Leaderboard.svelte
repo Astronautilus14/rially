@@ -5,10 +5,17 @@
   import { isLoading } from "../../stores/loadingStore";
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
+  import { getRequestHeaders } from "../getRequestHeaders";
 
-  let data;  // Stores the fetched leaderboard data
+  type scoreboardData = {
+    id: number,
+    name: string,
+    score: number
+  }[]
+
+  let data: scoreboardData;  // Stores the fetched leaderboard data
   let error = "";  // Stores any error message
-  let isPublic = true;  // Flag indicating if the leaderboard is public or not
+  let isPublic = false;  // Flag indicating if the leaderboard is public or not
 
   onMount(async () => {
     isLoading.set(true);  // Set the loading state to true
@@ -22,7 +29,7 @@
   async function fetchStanding() {
     fetch(`${settings.api_url}/leaderboard${$isLoggedIn ? "" : "/public"}`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"),
+        Authorization: localStorage.getItem("rially::token") ?? '',
       },
     })
       .then(async (res) => {
@@ -32,11 +39,11 @@
       .then((body) => {
         error = body.message;  // Store the error message, if any
         if (error) return;
-        let teamsdata = body.teams;
+        let teamsdata: scoreboardData = body.teams;
         teamsdata.sort((a, b) => b.score - a.score);
 
         data = teamsdata;  // Store the fetched leaderboard data
-        isPublic = body.isPublic ?? true;  // Update the isPublic flag from the response
+        isPublic = body.isPublic ?? false;  // Update the isPublic flag from the response
       })
       .catch((e) => (error = e));  // Catch any error and store it in the error variable
   }
@@ -46,23 +53,23 @@
     isLoading.set(true);  // Set the loading state to true
     fetch(`${settings.api_url}/leaderboard`, {
       method: "PATCH",
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
+      headers: getRequestHeaders(),
       body: JSON.stringify({
-        setPublic: isPublic,
+        setPublic: !isPublic,
       }),
     })
     .then(async (res) => {
       if (res.ok) {
         isPublic = !isPublic;  // If response is successful, toggle the isPublic flag
-        isLoading.set(false);  // Set the loading state to false
+      } else {
+        throw new Error((await res.json()).message);  // If there's an error, throw an error with the message
       }
-      throw new Error((await res.json()).message);  // If there's an error, throw an error with the message
     })
     .catch((e) => {
       error = e;  // Store the error message, if any
+    })
+    .finally(() => {
+      isLoading.set(false);  // Set the loading state to false
     })
   }
 </script>
@@ -76,15 +83,9 @@
         {/if}
         {#if $isLoggedIn}
           <div class="mb-5">
-            <h3>Public leaderboard</h3>
+            <h3>Public leaderboard is currently {isPublic ? 'enabled' : 'disabled'}</h3>
             <label class="switch">
-              <!-- Two-way binding with the isPublic flag -->
-              <!-- Call the handlePublicSwitch function on click -->
-              <input 
-                type="checkbox"
-                bind:checked={isPublic}
-                on:click={handlePublicSwitch}
-              />
+              <button class="btn btn-primary" on:click={handlePublicSwitch}>Turn leaderboard {isPublic ? 'off' : 'on'}</button>
               <span class="slider round" />
             </label>
           </div>

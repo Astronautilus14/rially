@@ -3,12 +3,13 @@
   import { Link, navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
   import { isLoggedIn } from "../../stores/accountStore";
+  import type { EventHandler } from "svelte/elements";
 
   let loading = false;
 
-  function handelSubmit(event) {
+  const handelSubmit: EventHandler<SubmitEvent, HTMLFormElement> = (event) => {
     if (loading) return; // If form is currently loading, return
-    const data = new FormData(event.target); // Retrieve form data
+    const data = new FormData(event.target as HTMLFormElement); // Retrieve form data
     const username = data.get("username"); // Get value of username field
     const password = data.get("password"); // Get value of password field
     if (!username || !password) return; // If username or password is missing, return early
@@ -81,6 +82,3 @@
     </div>
   </div>
 </main>
-
-<style lang="scss">
-</style>

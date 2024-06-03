@@ -10,35 +10,13 @@
 
   let mounted = false;
   // A list of 'pending' submissions. These are waiting on grading.
-  let pending: { id: number; active: boolean; type: string }[] = [];
+  let pending: { id: number; active: boolean; type: string; timeSubmitted: Date }[] = [];
   let error = "";
 
   // When a new submission comes in, handle it
   socket.on("submission", (id: number, type: string) => {
-    // Create a temporary array for reordering submissions
-    let temp: { id: number; active: boolean; type: string }[] = [];
-    let pushed = false;
     const newSubmission = { id, type, active: false };
-
-    // Handle the logic to put the new submission in the correct place
-    // The order is puzzle, challenge, crazy88 with each category having the oldest on top.
-    // This way, when grading, the submission with the highest priority is always on top.
-    if (newSubmission.type === "crazy88") return (pending = [...pending, newSubmission]);
-
-    for (const submission of pending) {
-      if (!pushed) {
-        if (newSubmission.type === "puzzle" && submission.type !== "puzzle") {
-          pushed = true;
-          temp.push(newSubmission);
-        } else if (newSubmission.type === "challenge" && submission.type === "crazy88") {
-          pushed = true;
-          temp.push(newSubmission);
-        }
-      }
-      temp.push(submission);
-    }
-    if (!pushed) temp.push({ id, type, active: false });
-    pending = temp;
+    pending = [...pending, { ...newSubmission, timeSubmitted: new Date() }];
   });
 
   // List that keeps track of submissions that have started grading while the client was still mounting (loading) 
@@ -95,7 +73,7 @@
     // Get all submissions that are waiting for a grade
     fetch(`${settings.api_url}/submissions`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"),
+        Authorization: localStorage.getItem("rially::token") ?? '',
       },
     })
       .then(async (response) => {
@@ -122,6 +100,11 @@
         console.error(error);
       });
   });
+
+  function minutesBetweenDates(date1: Date, date2: Date) {
+    const diffInMilliseconds = Math.abs(new Date(date2).getTime() - new Date(date1).getTime());
+    return Math.floor(diffInMilliseconds / (1000 * 60));
+  }
 </script>
 
 <main class="contianer">
@@ -141,11 +124,12 @@
         <!-- Display a list of pending submissions -->
         <ul class="list-group mb-3">
           {#each pending as submission}
+          {@const time = minutesBetweenDates(new Date(), submission.timeSubmitted)}
             <li class="list-group-item">
               <div>
                 <!-- Display the type of submission as a badge -->
                 <span class="badge bg-secondary">
-                  {submission.type.toLowerCase()} submission
+                  {submission.type.toLowerCase()} submission, {time} minute{time !== 1 ? 's' : ''} ago
                 </span>
                 <!-- Allow grading if the submission is not active -->
                 <button
@@ -166,7 +150,6 @@
   </div>
 </main>
 
-<!-- TODO: See styling for disabled button at /settings -->
 <style>
   .unclickable {
     cursor: not-allowed;

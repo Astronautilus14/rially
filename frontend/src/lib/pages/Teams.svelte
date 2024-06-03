@@ -13,7 +13,7 @@
   // After mounting, fetch all teams
   onMount(() => {
     fetchPlusPlus("teams")
-    .then((data: Team[]) => {
+    .then((data) => {
       teams = data;
     })
     .catch((e) => error = e);

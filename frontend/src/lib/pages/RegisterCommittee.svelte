@@ -4,15 +4,16 @@
   import QuoteCard from "../../components/QuoteCard.svelte";
   import settings from "../settings.json";
   import { Link } from "svelte-routing";
+  import type { EventHandler } from "svelte/elements";
 
   let loading = false; // Flag to track if the form is being submitted
   let error = ""; // Variable to store any potential error messages
 
-  const registerSubmit = (event) => {
+  const registerSubmit: EventHandler = (event) => {
     if (loading) return; // If the form is already being submitted, return and prevent duplicate submissions
     loading = true; // Set the loading state to true
     error = ""; // Clear any previous error messages
-    const data = new FormData(event.target); // Get form data from the event target
+    const data = new FormData(event.target as HTMLFormElement); // Get form data from the event target
     const username = data.get("username"); // Get the username from the form data
     const name = data.get("name"); // Get the name from the form data
     const password = data.get("password"); // Get the password from the form data
