@@ -6,23 +6,18 @@ import { isCommittee, teamCheck, tokenCheck } from "./auth";
 const router = express.Router();
 
 // Method to get the public leaderboard
-router.get("/public", async (req, res) => {
+router.get("/public", async (_, res) => {
   // Check if the leaderboard is set to public
-  if (
-    (
-      await prisma.variables.findUnique({
-        where: { key: "publicLeaderboard" },
-      })
-    )?.value === "true"
-  )
+  if (!(await getIsPublic())) {
     return sendError(res, "The leaderboard is currently turned off!", 200);
+  }
 
   res.json({ teams: await getLeaderboard() });
 });
 
 // Method to get the leaderboard as a committee member
-router.get("/", tokenCheck, teamCheck, isCommittee, async (req, res) => {
-  res.json({ teams: await getLeaderboard() });
+router.get("/", tokenCheck, teamCheck, isCommittee, async (_, res) => {
+  res.json({ teams: await getLeaderboard(), isPublic: await getIsPublic() });
 });
 
 // Helper function that queries the leaderboard from the database
@@ -48,6 +43,16 @@ async function getLeaderboard() {
       };
     })
     .sort((a, b) => b.score - a.score);
+}
+
+async function getIsPublic() {
+  return (
+    (
+      await prisma.variables.findUnique({
+        where: { key: "publicLeaderboard" },
+      })
+    )?.value === "true"
+  );
 }
 
 // Method to change the leaderboard between public and private
