@@ -60,6 +60,18 @@ router.post("/", verifyToken, async (req, res) => {
       message: "Name required",
     });
 
+  const channelName = name
+    // Remove all special characters
+    .replace(/[^\w\s-]/g, "")
+    // Replace all sequences spaces with a dash
+    .replace(/\s+/g, "-")
+    // Replace all sequences of dashes with a single dash
+    .replace(/-+/g, "-")
+    // If the name starts with dashes, remove them
+    .replace(/^-+/, "")
+    // If the name ends with dashses, remove them
+    .replace(/-$/, "");
+
   // Find the guild (discord server)
   const guild = await getFromCacheOrFetch(
     client.guilds,
@@ -87,7 +99,7 @@ router.post("/", verifyToken, async (req, res) => {
 
   // Create channel
   const channel = await guild.channels.create({
-    name,
+    name: channelName,
     type: ChannelType.GuildText,
     parent: process.env.TEAMS_CAT_ID!,
     permissionOverwrites: [
