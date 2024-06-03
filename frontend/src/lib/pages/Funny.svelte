@@ -6,9 +6,13 @@
   import settings from "../settings.json";
   import type { Submission } from "../types";
   import FileDisplay from "../../components/FileDisplay.svelte";
+  import Pagination from "../../components/Pagination.svelte";
 
   let data: Submission[] = []; // Array to store the fetched data
   let error = ""; // Variable to store any potential error messages
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const p = Number(urlParams.get("p")) || 1;
 
   onMount(() => {
     isLoading.set(true); // Set the loading state to true before fetching data
@@ -65,6 +69,7 @@
             </div>
           {/each}
         </div>
+        <Pagination p={p} url="/funny" />
       </GlassCard>
     </div>
   </div>

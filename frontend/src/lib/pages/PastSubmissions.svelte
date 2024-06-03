@@ -5,12 +5,16 @@
   import GlassCard from "../../components/GlassCard.svelte";
   import type { Submission } from "../types";
   import FileDisplay from "../../components/FileDisplay.svelte";
+  import Pagination from "../../components/Pagination.svelte";
 
   let submissions: Submission[] = [];
   let error = "";
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const p = Number(urlParams.get("p")) || 1;
+
   onMount(async () => {
-    fetch(`${settings.api_url}/submissions/past`, {
+    fetch(`${settings.api_url}/submissions/past?p=${p}`, {
       headers: {
         Authorization: localStorage.getItem("rially::token") ?? '',
       },
@@ -48,6 +52,11 @@
               </tr>
             </thead>
             <tbody>
+              {#if submissions.length === 0}
+                <tr>
+                  <td colspan="4">No more submissions found</td>
+                </tr>
+              {/if}
               {#each submissions as submission}
                 <tr>
                   <td>
@@ -67,6 +76,7 @@
             </tbody>
           </table>
         </ul>
+        <Pagination p={p} url="/pastsubmissions" />
       </GlassCard>
     </div>
   </div>
