@@ -8,6 +8,7 @@
   import { Pencil } from "svelte-bootstrap-icons";
   import { toast } from "@zerodevx/svelte-toast";
   import type { Team } from "../types";
+  import { getRequestHeaders } from "../getRequestHeaders";
 
   export let id: string; // Team's ID from the URL
   let error = ""; // Variable to store any potential error messages
@@ -29,10 +30,7 @@
 
     // Make a request to delete the team
     fetch(`${settings.api_url}/teams`, {
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
+      headers: getRequestHeaders(),
       method: "DELETE",
       body: JSON.stringify({
         teamId: team.id,
@@ -66,7 +64,7 @@
     // Make a request to delete a user from a team
     fetchPlusPlus("/teams/member", "DELETE", { userId: id }).finally(() => {
       // Remove the member from the team's member list
-      team.Users = team.Users.filter((member) => member.id !== id);
+      team.Users = team.Users?.filter((member) => member.id !== id);
       loadingMemberDeletes[id] = false;
       delete loadingMemberDeletes[id];
       error = "";
@@ -91,16 +89,13 @@
       });
   }
 
-  let changeUserNameFocus: { target: any; id: number; old: string } = null;
+  let changeUserNameFocus: { target: any; id: number; old: string } | null = null;
   function handleChangeUsername(newName: string, userId: number, oldName: string, target: any) {
     if (!newName || !userId) return;
 
     fetch(`${settings.api_url}/teams/member`, {
       method: "PATCH",
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
+      headers: getRequestHeaders(),
       body: JSON.stringify({
         userId,
         newName,
@@ -276,7 +271,6 @@
 
       &:hover {
         text-decoration: underline;
-        color: white;
       }
     }
   }

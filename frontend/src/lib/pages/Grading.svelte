@@ -95,7 +95,7 @@
     // Get all submissions that are waiting for a grade
     fetch(`${settings.api_url}/submissions`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"),
+        Authorization: localStorage.getItem("rially::token") ?? '',
       },
     })
       .then(async (response) => {
@@ -166,7 +166,6 @@
   </div>
 </main>
 
-<!-- TODO: See styling for disabled button at /settings -->
 <style>
   .unclickable {
     cursor: not-allowed;

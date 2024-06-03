@@ -7,6 +7,8 @@
   import { Link } from "svelte-routing";
   import type { Submission } from "../types";
   import FileDisplay from "../../components/FileDisplay.svelte";
+  import type { EventHandler } from "svelte/elements";
+  import { getRequestHeaders } from "../getRequestHeaders";
 
   export let id: string;
 
@@ -23,7 +25,7 @@
     // Perform actions when component is mounted
     fetch(`${settings.api_url}/submissions/${id}`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"),
+        Authorization: localStorage.getItem("rially::token") ?? '',
       },
     })
       .then(async (res) => {
@@ -54,10 +56,7 @@
 
     fetch(`${settings.api_url}/submissions/grade`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: localStorage.getItem("rially::token"),
-      },
+      headers: getRequestHeaders(),
       body: JSON.stringify({
         type: submission.type,
         id: submission.id,
@@ -76,8 +75,8 @@
       .finally(() => (loading = false));
   }
 
-  function handleApprove(event) {
-    const data = new FormData(event.target);
+  const handleApprove: EventHandler = (event) => {
+    const data = new FormData(event.target as HTMLFormElement);
     const score = Number(data.get("score"));
     if (Number.isNaN(score)) return;
     grade(score);

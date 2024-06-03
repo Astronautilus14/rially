@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { EventHandler } from "svelte/elements";
   import GlassCard from "../../components/GlassCard.svelte";
   import QuoteCard from "../../components/QuoteCard.svelte";
   import settings from "../settings.json";
@@ -11,11 +12,11 @@
   let error = ""; // Variable to store any potential error messages
   let succes = false; // Flag to track if the registration is successful
 
-  const registerSubmit = (event) => {
+  const registerSubmit: EventHandler = (event) => {
     if (loading) return; // If the form is already being submitted, return and prevent duplicate submissions
     loading = true; // Set the loading state to true
     error = ""; // Clear any previous error messages
-    const data = new FormData(event.target); // Get form data from the event target
+    const data = new FormData(event.target as HTMLFormElement); // Get form data from the event target
     const username = data.get("username"); // Get the username from the form data
     const name = data.get("name"); // Get the name from the form data
 

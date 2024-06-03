@@ -16,7 +16,7 @@
     // Fetch data from the API
     fetch(`${settings.api_url}/submissions/funny`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"), // Include authorization token from local storage
+        Authorization: localStorage.getItem("rially::token") ?? '', // Include authorization token from local storage
       },
     })
       .then(async (res) => {

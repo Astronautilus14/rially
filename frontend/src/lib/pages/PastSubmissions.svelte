@@ -12,7 +12,7 @@
   onMount(async () => {
     fetch(`${settings.api_url}/submissions/past`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"),
+        Authorization: localStorage.getItem("rially::token") ?? '',
       },
     })
       .then(async (response) => {

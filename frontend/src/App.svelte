@@ -63,7 +63,7 @@
       </div>
     </nav>
   {/if}
-  <div data-bs-theme="dark" class="content">
+  <div data-bs-theme="light" class="content">
     <Route path="register/committee">
       <RegisterCommittee />
     </Route>

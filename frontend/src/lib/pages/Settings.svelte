@@ -3,6 +3,7 @@
   import { navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
+  import { getRequestHeaders } from "../getRequestHeaders";
 
   let users: {id: number, username: string}[] = []; // List to store all users
   let readNote = false; // Flag to track if the warning note has been read
@@ -12,7 +13,7 @@
   onMount(() => {
     fetch(`${settings.api_url}/teams/users`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"),
+        Authorization: localStorage.getItem("rially::token") ?? '',
       },
     })
       .then(async (res) => {
@@ -29,7 +30,7 @@
 
     fetch(`${settings.api_url}/teams/committee`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"),
+        Authorization: localStorage.getItem("rially::token") ?? '',
       },
     })
       .then(async (res) => {
@@ -58,10 +59,7 @@
     changePassLoading = true; // Set the loading state to true
     fetch(`${settings.api_url}/auth/changepassword`, {
       method: "POST",
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
+      headers: getRequestHeaders(),
       body: JSON.stringify({
         oldPassword,
         newPassword,
@@ -94,10 +92,7 @@
     addUserLoading = true; // Set the loading state to true
     fetch(`${settings.api_url}/teams/member`, {
       method: "DELETE",
-      headers: {
-        Authorization: localStorage.getItem("rially::token"),
-        "Content-Type": "application/json",
-      },
+      headers: getRequestHeaders(),
       body: JSON.stringify({
         userId: id,
         newTeamId: committeeId,

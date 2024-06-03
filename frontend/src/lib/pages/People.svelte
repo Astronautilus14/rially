@@ -3,18 +3,21 @@
   import { navigate } from "svelte-routing";
   import GlassCard from "../../components/GlassCard.svelte";
   import settings from "../settings.json";
+  import type { Member, Team } from "../types";
+  import type { EventHandler } from "svelte/elements";
+  import { getRequestHeaders } from "../getRequestHeaders";
 
   let error = "";
-  let isLoading = {}; // Initialize an object to track loading state for each user
+  let isLoading: Record<number, boolean> = {}; // Initialize an object to track loading state for each user
 
-  let users = []; // Initialize an array to store user data
-  let teams = []; // Initialize an array to store team data
+  let users: Member[] = []; // Initialize an array to store user data
+  let teams: Omit<Team, 'Users'>[] = []; // Initialize an array to store team data
 
   onMount(() => {
     // Perform actions when the component is mounted (loaded)
     fetch(`${settings.api_url}/teams/lonely`, {
       headers: {
-        Authorization: localStorage.getItem("rially::token"), // Include authorization token from local storage in the headers
+        Authorization: localStorage.getItem("rially::token") ?? '', // Include authorization token from local storage in the headers
       },
     })
       .then(async (res) => {
@@ -36,9 +39,9 @@
       });
   });
 
-  function handleAddUserToTeam(event) {
+  const handleAddUserToTeam: EventHandler<SubmitEvent, HTMLFormElement> = (event) => {
     // Handle the form submission to add a user to a team
-    const data = new FormData(event.target);
+    const data = new FormData(event.target as HTMLFormElement);
     const userId = Number(data.get("userId")); // Get the selected user ID from the form data
     const teamId = Number(data.get("teamId")); // Get the selected team ID from the form data
 
@@ -49,10 +52,7 @@
 
     fetch(`${settings.api_url}/teams/member`, {
       method: "POST",
-      headers: {
-        Authorization: localStorage.getItem("rially::token"), // Include authorization token from local storage in the headers
-        "Content-Type": "application/json", // Set the content type to JSON
-      },
+      headers: getRequestHeaders(),
       body: JSON.stringify({
         userId,
         teamId,
@@ -99,6 +99,13 @@
               </tr>
             </thead>
             <tbody>
+              {#if users.length === 0}
+                <tr>
+                  <td colspan="4">
+                    No unassigned users
+                  </td>
+                </tr>
+              {/if}
               {#each users as user}
                 <tr>
                   <td>
@@ -121,7 +128,7 @@
                     <input
                       type="submit"
                       class="btn btn-primary"
-                      value={isLoading[user] ? "Loading..." : "Submit"}
+                      value={isLoading[user.id] ? "Loading..." : "Submit"}
                     />
                   </td>
                 </tr>

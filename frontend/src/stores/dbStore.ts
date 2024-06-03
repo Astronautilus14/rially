@@ -1,17 +1,20 @@
 import { navigate } from "svelte-routing";
 import { isLoading, showError } from "./loadingStore";
 import settings from "../lib/settings.json";
+import { getRequestHeaders } from "../lib/getRequestHeaders";
 
-const fetchPlusPlus = (url: string, method: string = "GET", body?: any, shouldReload?: boolean) => {
+const fetchPlusPlus = (
+  url: string,
+  method: string = "GET",
+  body?: any,
+  shouldReload?: boolean
+) => {
   // Own fetch including isLoading, error handling and returning the promise data
   if (url[0] === "/") url = url.slice(1);
 
-  return new Promise((resolve, reject) => {
+  return new Promise<any>((resolve, reject) => {
     fetch(`${settings.api_url}/${url}`, {
-      headers: {
-        "Content-Type": "application/json", // application json content type works on GET as well lol
-        Authorization: localStorage.getItem("rially::token"),
-      },
+      headers: getRequestHeaders(),
       method: method,
       body: body ? JSON.stringify(body) : undefined,
     })
@@ -22,12 +25,12 @@ const fetchPlusPlus = (url: string, method: string = "GET", body?: any, shouldRe
           reject("Not logged in");
           navigate("/login", { replace: true });
         } else {
-          throw new Error((await res.json()).message)
+          throw new Error((await res.json()).message);
         }
       })
       .catch((error: any) => {
         console.error(error);
-        showError(error.toString())
+        showError(error.toString());
         reject(error);
       })
       .finally(() => {

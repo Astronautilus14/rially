@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-$primary: #720acc;
+$primary: #CFC3E4;
 @import "~bootstrap/scss/bootstrap";
 
 html,
@@ -12,8 +12,8 @@ body {
   font-family: "Roboto", sans-serif;
   //   font-size: 14px;
 
-  background: #720acc;
-  background: radial-gradient(circle, #730acd 0%, rgb(28, 5, 61) 100%);
+  background: $primary;
+  background: radial-gradient(circle, $primary 0%, rgb(255, 255, 255) 100%);
 
   overflow: visible;
 
@@ -24,80 +24,6 @@ body {
       overflow-x: hidden;
     }
   }
-
-  .trees {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-    top: -20vh;
-
-    background: url("/trees.svg") no-repeat center center;
-
-    //   Make svg background stretch and scale horizontally by 1.2x
-    background-size: cover;
-    filter: invert(9%) sepia(28%) saturate(6256%) hue-rotate(254deg)
-      brightness(82%) contrast(110%) blur(2px);
-  }
-
-  .undertrees-cover {
-    position: fixed;
-    height: 20vh;
-    width: 100%;
-    top: 70vh;
-    background-color: #1d0640;
-    //   background-color: #3b1a6c;
-    z-index: 2;
-  }
-
-  .trees2 {
-    position: fixed;
-    width: 100%;
-    height: 65%;
-    z-index: 2;
-    top: 35vh;
-
-    background: url("/trees2.svg") no-repeat center center;
-
-    //   Make svg background stretch and scale horizontally by 1.2x
-    background-size: cover;
-    filter: invert(8%) sepia(81%) saturate(5540%) hue-rotate(265deg)
-      brightness(65%) contrast(102%) blur(1px);
-  }
-
-  .trees3 {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-    top: 25vh;
-    scale: 1 0.5;
-
-    background: url("/trees3.svg") no-repeat center center;
-
-    //   Make svg background stretch and scale horizontally by 1.2x
-    background-size: cover;
-    filter: invert(13%) sepia(35%) saturate(4571%) hue-rotate(252deg)
-      brightness(91%) contrast(101%);
-  }
-
-  .moon {
-    height: 60vh;
-    width: 60vh;
-    background-color: #fcfeda;
-    border-radius: 50%;
-    display: inline-block;
-
-    //   Align in middle of screen
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-
-    //   make it glow
-    box-shadow: 0 0 20px 10px #fcfeda;
-  }
 }
 
 /* Fix body not aligning on top: */
@@ -106,14 +32,10 @@ body {
   flex-direction: column;
 }
 
-// media phone:
-@media (max-width: 767px) {
-  .moon {
-    height: 40vh;
-    width: 40vh;
-  }
-}
-
 .error {
   color: red;
+}
+
+a {
+  color: #77698f
 }
