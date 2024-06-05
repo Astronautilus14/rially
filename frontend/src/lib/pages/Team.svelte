@@ -57,7 +57,7 @@
   // Key-Value pair that keeps track of loading state of member delete requests
   let loadingMemberDeletes: { [key: number]: boolean } = {};
   function handleMemberDelete(id: number) {
-    // If the user delete request is already being processed, return
+    // If the user delete request is already being processed
     if (loadingMemberDeletes[id]) return;
     loadingMemberDeletes[id] = true;
 

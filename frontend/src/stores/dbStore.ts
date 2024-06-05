@@ -20,7 +20,17 @@ const fetchPlusPlus = (
     })
       .then(async (res) => {
         if (res.ok) {
-          resolve(await res.json());
+          let json;
+          try {
+            json = await res.json();
+          } catch (e) {
+            json = null;
+          }
+          if (json) {
+            resolve(json);
+          } else {
+            resolve(null);
+          }
         } else if (res.status === 401 || res.status === 403) {
           reject("Not logged in");
           navigate("/login", { replace: true });

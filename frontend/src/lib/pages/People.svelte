@@ -39,11 +39,11 @@
       });
   });
 
-  const handleAddUserToTeam: EventHandler<SubmitEvent, HTMLFormElement> = (event) => {
+  const handleAddUserToTeam = (userId: number) => {
     // Handle the form submission to add a user to a team
-    const data = new FormData(event.target as HTMLFormElement);
-    const userId = Number(data.get("userId")); // Get the selected user ID from the form data
-    const teamId = Number(data.get("teamId")); // Get the selected team ID from the form data
+    const teamInput = document.getElementById(`teamId-${userId}`) as HTMLSelectElement | null; // Get the team selection input element
+    if (!teamInput) return; // If the team input is missing, return
+    const teamId = Number(teamInput.value); // Get the selected team ID from the form data
 
     if (!teamId || !userId) return; // If either teamId or userId is missing, return
     if (Number.isNaN(teamId) || Number.isNaN(userId)) return; // If either teamId or userId is not a valid number, return
@@ -86,57 +86,53 @@
         {#if error}
           <p class="error">{error}</p> <!-- Display the error message if there is an error -->
         {/if}
-
-        <form on:submit|preventDefault={handleAddUserToTeam}>
-          <!-- Handle form submission and prevent the default form behavior -->
-          <table class="table table-striped table-bordered border-white">
-            <thead>
+        <!-- Handle form submission and prevent the default form behavior -->
+        <table class="table table-striped table-bordered border-white">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Username</th>
+              <th scope="col">Team</th>
+              <th scope="col">Submit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#if users.length === 0}
               <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Username</th>
-                <th scope="col">Team</th>
-                <th scope="col">Submit</th>
+                <td colspan="4">
+                  No unassigned users
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {#if users.length === 0}
-                <tr>
-                  <td colspan="4">
-                    No unassigned users
-                  </td>
-                </tr>
-              {/if}
-              {#each users as user}
-                <tr>
-                  <td>
-                    {user.name} <!-- Display the user's name -->
-                  </td>
-                  <td>
-                    {user.username} <!-- Display the user's username -->
-                  </td>
-                  <td>
-                    <select name="teamId" class="form-select">
-                      {#each teams as team}
-                        <option value={team.id}>{team.name}</option> <!-- Display dropdown options for each team -->
-                      {/each}
-                    </select>
-                  </td>
-                  <!-- Store the user ID in a hidden input field -->
-                  <input type="hidden" name="userId" value={user.id} />
-                  <td>
-                    <!-- Display the appropriate button label based on the loading state -->
-                    <input
-                      type="submit"
-                      class="btn btn-primary"
-                      value={isLoading[user.id] ? "Loading..." : "Submit"}
-                    />
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </form>
-      </GlassCard>
+            {/if}
+            {#each users as user}
+              <tr>
+                <td>
+                  {user.name} <!-- Display the user's name -->
+                </td>
+                <td>
+                  {user.username} <!-- Display the user's username -->
+                </td>
+                <td>
+                  <select id="teamId-{user.id}" class="form-select">
+                    {#each teams as team}
+                      <option value={team.id}>{team.name}</option> <!-- Display dropdown options for each team -->
+                    {/each}
+                  </select>
+                </td>
+                <td>
+                  <!-- Display the appropriate button label based on the loading state -->
+                  <button
+                    class="btn btn-primary"
+                    on:click={() => { handleAddUserToTeam(user.id) }}
+                  >
+                    {isLoading[user.id] ? "Loading..." : "Submit"}
+                  </button>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+    </GlassCard>
     </div>
   </div>
 </main>
