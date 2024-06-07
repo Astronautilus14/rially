@@ -100,6 +100,7 @@ npm run dev
 The following needs to happen to deploy the app in Doccker.
 
 ### Frontend
+Set the url of the socket server and api in `/src/lib/settings.json`
 ```
 npm run build
 ```
