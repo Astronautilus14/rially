@@ -17,7 +17,7 @@ Web app with frontend in [Svelte](https://svelte.dev/), backend in [Node.js](htt
 
 There are 2 ways to setup your development enviroment, you can choose either.
 
-### Docker compose
+### Docker compose (linux only)
 
 Prerequisites: Docker installed
 
@@ -95,3 +95,75 @@ npm i
 cp src/lib/settings.json.example src/lib/settings.json
 npm run dev
 ```
+
+## Deployment
+The following needs to happen to deploy the app in Doccker.
+
+### Frontend
+```
+npm run build
+```
+This builds the app as a single page application and puts the static files in `/dist`. This can than be hosten on a static file server.
+
+### Build docker images
+
+#### Backend
+First make sure the correct variables are set in the `.env`
+```
+cd ./backend
+docker build . -t "rially-api:1.0.0" -f Dockerfile.prod
+```
+
+#### Bot
+First make sure the correct variables are set in the `.env`
+```
+cd ./bot
+docker build . -t "rially-bot:1.0.0" -f Dockerfile.prod
+```
+
+### Caddy
+Example caddy config:
+
+```
+(common) {
+   encode {
+      gzip
+      zstd
+   }
+
+   handle_errors {
+      rewrite * /{err.status_code}
+      reverse_proxy https://http.cat {
+         header_up Host {upstream_hostport}
+         replace_status {err.status_code}
+      }
+   }
+}
+
+rially.nautdevroome.nl {
+	root * /var/www/rially
+	try_files {path} {file} /index.html
+	file_server
+}
+
+bot.rially.nautdevroome.nl {
+	import common
+
+	reverse_proxy :142
+}
+
+api.rially.nautdevroome.nl {
+	import common
+
+	reverse_proxy :140
+}
+
+socket.rially.nautdevroome.nl {
+	import common
+
+	reverse_proxy :141
+}
+
+```
+
+
